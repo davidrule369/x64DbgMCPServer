@@ -69,5 +69,101 @@ namespace DotNetPlugin.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [
+        ///  {
+        ///    &quot;command&quot;: &quot;InitDebug&quot;,
+        ///    &quot;aliases&quot;: [&quot;initdbg&quot;, &quot;init&quot;],
+        ///    &quot;description&quot;: &quot;Initializes the debugger by loading the specified executable, performing basic checks, setting breakpoints on TLS callbacks (if present), and at the process entry point. It breaks at the system breakpoint before returning control to the user.&quot;,
+        ///    &quot;arguments&quot;: [
+        ///      {
+        ///        &quot;name&quot;: &quot;executable_path&quot;,
+        ///        &quot;type&quot;: &quot;string&quot;,
+        ///        &quot;description&quot;: &quot;Path to the executable file to debug. If a full path is  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string DebugControl {
+            get {
+                return ResourceManager.GetString("DebugControl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [
+        ///  {
+        ///    &quot;command&quot;: &quot;disasm&quot;,
+        ///    &quot;aliases&quot;: [&quot;dis&quot;, &quot;d&quot;],
+        ///    &quot;description&quot;: &quot;Opens the disassembly view at the specified address.&quot;,
+        ///    &quot;arguments&quot;: [
+        ///      {
+        ///        &quot;name&quot;: &quot;address&quot;,
+        ///        &quot;type&quot;: &quot;integer&quot;,
+        ///        &quot;description&quot;: &quot;The memory address to display in the disassembly view.&quot;
+        ///      }
+        ///    ],
+        ///    &quot;result&quot;: null
+        ///  },
+        ///  {
+        ///    &quot;command&quot;: &quot;dump&quot;,
+        ///    &quot;aliases&quot;: [],
+        ///    &quot;description&quot;: &quot;Opens the dump view at the specified address.&quot;,
+        ///    &quot;arguments&quot;: [
+        ///      {
+        ///        &quot;name&quot;:  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string GUI {
+            get {
+                return ResourceManager.GetString("GUI", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [
+        ///  {
+        ///    &quot;command&quot;: &quot;find&quot;,
+        ///    &quot;aliases&quot;: [],
+        ///    &quot;description&quot;: &quot;Find a pattern in a memory page.&quot;,
+        ///    &quot;arguments&quot;: [
+        ///      {
+        ///        &quot;name&quot;: &quot;start_address&quot;,
+        ///        &quot;type&quot;: &quot;integer&quot;,
+        ///        &quot;description&quot;: &quot;The address to start searching from. The search stops at the end of the memory page.&quot;
+        ///      },
+        ///      {
+        ///        &quot;name&quot;: &quot;pattern&quot;,
+        ///        &quot;type&quot;: &quot;string&quot;,
+        ///        &quot;description&quot;: &quot;The byte pattern to search for, which can include wildcards (e.g., &apos;EB0?90??8D&apos;).&quot;
+        ///      },
+        ///      {
+        ///  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Search {
+            get {
+                return ResourceManager.GetString("Search", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [
+        ///  {
+        ///    &quot;command&quot;: &quot;createthread&quot;,
+        ///    &quot;aliases&quot;: [&quot;threadcreate&quot;, &quot;newthread&quot;, &quot;threadnew&quot;],
+        ///    &quot;description&quot;: &quot;Creates a new thread at the specified entry point.&quot;,
+        ///    &quot;arguments&quot;: [
+        ///      {
+        ///        &quot;name&quot;: &quot;entry_point&quot;,
+        ///        &quot;type&quot;: &quot;integer&quot;,
+        ///        &quot;description&quot;: &quot;The memory address where the new thread will begin execution.&quot;
+        ///      },
+        ///      {
+        ///        &quot;name&quot;: &quot;argument&quot;,
+        ///        &quot;type&quot;: &quot;integer&quot;,
+        ///        &quot;description&quot;: &quot;The argument to pass to the new thread. Defaults to 0 if not  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ThreadControl {
+            get {
+                return ResourceManager.GetString("ThreadControl", resourceCulture);
+            }
+        }
     }
 }

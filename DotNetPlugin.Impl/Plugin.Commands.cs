@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using DotNetPlugin.NativeBindings;
 using DotNetPlugin.NativeBindings.Script;
 using DotNetPlugin.NativeBindings.SDK;
+using DotNetPlugin.Properties;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
@@ -117,20 +118,46 @@ namespace DotNetPlugin
         /// </summary>
         /// <param name="command">The debugger command string to execute.</param>
         /// <returns>True if the command executed successfully, false otherwise.</returns>
-        [Command("ExecuteDebuggerCommand", DebugOnly = false)]
-        public static bool ExecuteDebuggerCommand(string[] command)
+        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true)]
+        public static bool ExecuteDebuggerCommand(string command)
         {
-            return DbgCmdExec(command[0]);
+            Console.WriteLine("Executeing DebuggerCommand: " + command);
+            return DbgCmdExec(command);
         }
+
+        [Command("ListDebuggerCommands", DebugOnly = false, MCPOnly = true)]
+        public static string ListDebuggerCommands(string subject = "")
+        {
+            subject = subject?.Trim().ToLowerInvariant();
+
+            // Mapping user input to resource keys
+            var map = new Dictionary<string, string>
+            {
+                { "debugcontrol", Resources.DebugControl },
+                { "gui", Resources.GUI },
+                { "search", Resources.Search },
+                { "threadcontrol", Resources.ThreadControl }
+            };
+
+            if (string.IsNullOrWhiteSpace(subject))
+            {
+                return "Available options:\n- DebugControl\n- GUI\n- Search\n- ThreadControl\n\nExample:\nListDebuggerCommands subject=gui";
+            }
+
+            if (map.TryGetValue(subject, out string json))
+            {
+                return json;
+            }
+
+            return "Unknown subject group. Try one of:\n- DebugControl\n- GUI\n- Search\n- ThreadControl";
+        }
+
+
 
         [Command("ExecuteDebuggerCommandDirect", DebugOnly = false)]
         public static bool ExecuteDebuggerCommandDirect(string[] args)
         {
-            return ExecuteDebuggerCommandDirect(args[0]);
-        }
-        public static bool ExecuteDebuggerCommandDirect(string command)
-        {
-            return DbgCmdExecDirect(command);
+            return ExecuteDebuggerCommandDirect(args);
         }
 
         //[Command("ReadMemory", DebugOnly = false)]

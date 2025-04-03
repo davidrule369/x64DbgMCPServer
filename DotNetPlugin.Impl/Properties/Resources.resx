@@ -121,4 +121,979 @@
   <data name="AboutIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\abouticon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="DebugControl" xml:space="preserve">
+    <value>[
+  {
+    "command": "InitDebug",
+    "aliases": ["initdbg", "init"],
+    "description": "Initializes the debugger by loading the specified executable, performing basic checks, setting breakpoints on TLS callbacks (if present), and at the process entry point. It breaks at the system breakpoint before returning control to the user.",
+    "arguments": [
+      {
+        "name": "executable_path",
+        "type": "string",
+        "description": "Path to the executable file to debug. If a full path is not provided, the current directory is used. Enclose paths with spaces in quotation marks."
+      },
+      {
+        "name": "command_line",
+        "type": "string",
+        "description": "Command line arguments to pass to the process.",
+        "optional": true
+      },
+      {
+        "name": "current_folder",
+        "type": "string",
+        "description": "Working directory for the process.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "variables_set": ["$pid", "$hp", "$hProcess"],
+      "description": "Sets the process ID and process handle variables."
+    }
+  },
+  {
+    "command": "StopDebug",
+    "aliases": ["stop", "dbgstop"],
+    "description": "Stops the current debugging session and detaches from the debuggee.",
+    "arguments": [],
+    "result": {
+      "variables_cleared": ["$pid", "$hp", "$hProcess"],
+      "description": "Clears the process ID and process handle variables."
+    }
+  },
+  {
+    "command": "AttachDebugger",
+    "aliases": ["attach"],
+    "description": "Attaches the debugger to a running process.",
+    "arguments": [
+      {
+        "name": "pid",
+        "type": "integer",
+        "description": "Process Identifier (PID) of the running process."
+      },
+      {
+        "name": "event_handle",
+        "type": "handle",
+        "description": "Handle to an event object to signal (for internal use).",
+        "optional": true
+      },
+      {
+        "name": "tid",
+        "type": "integer",
+        "description": "Thread Identifier (TID) of the thread to resume after attaching (for internal use).",
+        "optional": true
+      }
+    ],
+    "result": {
+      "variables_set": ["$pid", "$hp", "$hProcess"],
+      "description": "Sets the process ID and process handle variables."
+    }
+  },
+  {
+    "command": "DetachDebugger",
+    "aliases": ["detach"],
+    "description": "Detaches the debugger from the debuggee, allowing it to continue running independently.",
+    "arguments": [],
+    "result": {
+      "variables_cleared": ["$pid", "$hp", "$hProcess"],
+      "description": "Clears the process ID and process handle variables."
+    }
+  },
+  {
+    "command": "run",
+    "aliases": ["go", "r", "g"],
+    "description": "Resumes execution of the debuggee from the current position.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "erun",
+    "aliases": ["ego", "er", "eg"],
+    "description": "Resumes execution of the debuggee and ignores any exceptions that occur.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "serun",
+    "aliases": ["sego"],
+    "description": "Resumes execution of the debuggee, ignoring the current exception and any new exceptions that occur.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "pause",
+    "aliases": [],
+    "description": "Pauses the execution of the debuggee.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "DebugContinue",
+    "aliases": ["con"],
+    "description": "Continues execution of the debuggee after handling an exception.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "StepInto",
+    "aliases": ["sti"],
+    "description": "Executes the next instruction, stepping into function calls.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "eStepInto",
+    "aliases": ["esti"],
+    "description": "Executes the next instruction, stepping into function calls, and ignores any exceptions.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "seStepInto",
+    "aliases": ["sesti"],
+    "description": "Executes the next instruction, stepping into function calls, and ignores the current and any new exceptions.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "StepOver",
+    "aliases": ["step", "sto", "st"],
+    "description": "Executes the next instruction, stepping over function calls.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "eStepOver",
+    "aliases": ["estep", "esto", "est"],
+    "description": "Executes the next instruction, stepping over function calls, and ignores any exceptions.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "seStepOver",
+    "aliases": ["sestep", "sesto", "sest"],
+    "description": "Executes the next instruction, stepping over function calls, and ignores the current and any new exceptions.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "StepOut",
+    "aliases": ["rtr"],
+    "description": "Runs until the current function returns.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "eStepOut",
+    "aliases": ["ertr"],
+    "description": "Runs until the current function returns, ignoring any exceptions.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "skip",
+    "aliases": [],
+    "description": "Skips the next instruction, swallowing the current exception if present. Useful for continuing after an INT3 instruction.",
+    "arguments": [
+      {
+        "name": "count",
+        "type": "integer",
+        "description": "Number of instructions to skip. Defaults to 1 if not specified.",
+        "optional": true
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "InstrUndo",
+    "aliases": [],
+    "description": "Undoes the last instruction executed.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "StepUser",
+    "aliases": ["StepUserInto"],
+    "description": "Steps into user code, skipping system and library calls.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "StepSystem",
+    "aliases": ["StepSystemInto"],
+    "description": "Steps into system code, used when skipping over user-mode instructions is desired.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "DebugBreak",
+    "aliases": ["int3"],
+    "description": "Inserts a software breakpoint at the current instruction pointer. Execution will break when this point is reached again.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "StopTracking",
+    "aliases": [],
+    "description": "Stops instruction tracking and clears the instruction history buffer.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "TraceInto",
+    "aliases": ["ti"],
+    "description": "Begins tracing into instructions until a return is hit or user interrupts it.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "TraceOver",
+    "aliases": ["to"],
+    "description": "Begins tracing over function calls instead of stepping into them.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "RunTo",
+    "aliases": ["rt"],
+    "description": "Runs execution until the specified address is reached.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer or label",
+        "description": "The address or label to run to."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "SetEntryBreak",
+    "aliases": [],
+    "description": "Enables or disables a breakpoint at the program entry point.",
+    "arguments": [
+      {
+        "name": "enable",
+        "type": "boolean",
+        "description": "Set to 1 to enable, 0 to disable the entry point breakpoint."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "SetTlsBreak",
+    "aliases": [],
+    "description": "Enables or disables breakpoints on TLS callback functions.",
+    "arguments": [
+      {
+        "name": "enable",
+        "type": "boolean",
+        "description": "Set to 1 to enable, 0 to disable TLS callback breakpoints."
+      }
+    ],
+    "result": null
+  }
+]
+ 
+</value>
+  </data>
+  <data name="GUI" xml:space="preserve">
+    <value>[
+  {
+    "command": "disasm",
+    "aliases": ["dis", "d"],
+    "description": "Opens the disassembly view at the specified address.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "The memory address to display in the disassembly view."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "dump",
+    "aliases": [],
+    "description": "Opens the dump view at the specified address.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "The memory address to display in the dump view."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "sdump",
+    "aliases": [],
+    "description": "Opens the stack dump view at the specified address.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "The memory address to display in the stack dump view."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "memmapdump",
+    "aliases": [],
+    "description": "Displays the memory map in the dump view.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "graph",
+    "aliases": [],
+    "description": "Opens the graph view at the specified address.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "The memory address to display in the graph view."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "guiupdateenable",
+    "aliases": [],
+    "description": "Enables GUI updates.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "guiupdatedisable",
+    "aliases": [],
+    "description": "Disables GUI updates.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "setfreezestack",
+    "aliases": [],
+    "description": "Sets whether the stack view should be frozen.",
+    "arguments": [
+      {
+        "name": "freeze",
+        "type": "boolean",
+        "description": "Set to true to freeze the stack view, false to unfreeze."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "refinit",
+    "aliases": [],
+    "description": "Initializes the reference view.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "refadd",
+    "aliases": [],
+    "description": "Adds a reference to the reference view.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "The memory address of the reference."
+      },
+      {
+        "name": "type",
+        "type": "string",
+        "description": "The type of reference."
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "description": "The text description of the reference."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "refget",
+    "aliases": [],
+    "description": "Retrieves a reference from the reference view.",
+    "arguments": [
+      {
+        "name": "index",
+        "type": "integer",
+        "description": "The index of the reference to retrieve."
+      }
+    ],
+    "result": {
+      "name": "reference",
+      "type": "object",
+      "description": "The retrieved reference object."
+    }
+  },
+  {
+    "command": "EnableLog",
+    "aliases": ["LogEnable"],
+    "description": "Enables logging in the log view.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "DisableLog",
+    "aliases": ["LogDisable"],
+    "description": "Disables logging in the log view.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "ClearLog",
+    "aliases": ["cls", "lc", "lclr"],
+    "description": "Clears the log view.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "AddFavouriteTool",
+    "aliases": [],
+    "description": "Adds a tool to the favourites menu.",
+    "arguments": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name of the tool."
+      },
+      {
+        "name": "path",
+        "type": "string",
+        "description": "The path to the tool executable."
+      },
+      {
+        "name": "arguments",
+        "type": "string",
+        "description": "The arguments to pass to the tool.",
+        "optional": true
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "AddFavouriteCommand",
+    "aliases": [],
+    "description": "Adds a command to the favourites menu.",
+    "arguments": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name of the command."
+      },
+      {
+        "name": "command",
+        "type": "string",
+        "description": "The command string to execute."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "AddFavouriteToolShortcut",
+    "aliases": ["SetFavouriteToolShortcut"],
+    "description": "Sets a shortcut for a favourite tool.",
+    "arguments": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name of the favourite tool."
+      },
+      {
+        "name": "shortcut",
+        "type": "string",
+        "description": "The shortcut key combination."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "FoldDisassembly",
+    "aliases": [],
+    "description": "Folds or unfolds a block in the disassembly view.",
+    "arguments": [
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "The address of the block to fold or unfold."
+      },
+      {
+        "name": "fold",
+        "type": "boolean",
+        "description": "Set to true to fold the block, false to unfold."
+      }
+    ],
+    "result": null
+  }
+]
+</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>[
+  {
+    "command": "find",
+    "aliases": [],
+    "description": "Find a pattern in a memory page.",
+    "arguments": [
+      {
+        "name": "start_address",
+        "type": "integer",
+        "description": "The address to start searching from. The search stops at the end of the memory page."
+      },
+      {
+        "name": "pattern",
+        "type": "string",
+        "description": "The byte pattern to search for, which can include wildcards (e.g., 'EB0?90??8D')."
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the data to search in. Defaults to the size of the memory region.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The virtual address where the pattern is found, or 0 if not found."
+    }
+  },
+  {
+    "command": "findall",
+    "aliases": [],
+    "description": "Find all occurrences of a pattern in a memory page.",
+    "arguments": [
+      {
+        "name": "start_address",
+        "type": "integer",
+        "description": "The address to start searching from. The search stops at the end of the memory page."
+      },
+      {
+        "name": "pattern",
+        "type": "string",
+        "description": "The byte pattern to search for, which can include wildcards (e.g., 'EB0?90??8D')."
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the data to search in. Defaults to the size of the memory region.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of occurrences found."
+    }
+  },
+  {
+    "command": "findallmem",
+    "aliases": ["findmemall"],
+    "description": "Find all occurrences of a pattern in the entire memory map.",
+    "arguments": [
+      {
+        "name": "start_address",
+        "type": "integer",
+        "description": "The address to start searching from."
+      },
+      {
+        "name": "pattern",
+        "type": "string",
+        "description": "The byte pattern to search for, which can include wildcards (e.g., 'EB0?90??8D')."
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the data to search in. Defaults to the entire memory map (-1).",
+        "optional": true
+      },
+      {
+        "name": "region",
+        "type": "string",
+        "description": "Set to 'user', 'system', or 'module' to only include user modules, system modules, or a specific module in the search.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of occurrences found."
+    }
+  },
+  {
+    "command": "findasm",
+    "aliases": ["asmfind"],
+    "description": "Find assembled instruction.",
+    "arguments": [
+      {
+        "name": "instruction",
+        "type": "string",
+        "description": "The instruction to look for (e.g., 'mov eax, ebx'). Ensure the instruction is quoted."
+      },
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "Address of or inside a memory page to look in. Defaults to the current instruction pointer (CIP) if not specified.",
+        "optional": true
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the data to search in. Defaults to the size of the memory region.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of references found."
+    }
+  },
+  {
+    "command": "findguid",
+    "aliases": ["guidfind"],
+    "description": "Find references to a GUID. The referenced GUID must be registered in the system.",
+    "arguments": [
+      {
+        "name": "base_address",
+        "type": "integer",
+        "description": "The base of the memory range. Defaults to RIP or EIP if not specified.",
+        "optional": true
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the memory range.",
+        "optional": true
+      },
+      {
+        "name": "region",
+        "type": "integer",
+        "description": "The region to search: 0 for current region, 1 for current module, 2 for all modules.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "Set to 1 if any GUID is found, 0 otherwise."
+    }
+  },
+  {
+    "command": "reffind",
+    "aliases": ["findref", "ref"],
+    "description": "Find references to a certain value.",
+    "arguments": [
+      {
+        "name": "value",
+        "type": "integer",
+        "description": "The value to look for."
+      },
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "Address of or inside a memory page to look in. Defaults to CIP if not specified.",
+        "optional": true
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the data to search in.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of references found."
+    }
+  },
+  {
+    "command": "reffindrange",
+    "aliases": ["findrefrange", "refrange"],
+    "description": "Find references to a certain range of values.",
+    "arguments": [
+      {
+        "name": "start_range",
+        "type": "integer",
+        "description": "Start of the range (inclusive)."
+      },
+      {
+        "name": "end_range",
+        "type": "integer",
+        "description": "End of the range (inclusive). Defaults to start_range if not specified.",
+        "optional": true
+      },
+      {
+        "name": "address",
+        "type": "integer",
+        "description": "Address of or inside a memory page to look in. Defaults to CIP if not specified.",
+        "optional": true
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the data to search in.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of references found."
+    }
+  },
+  {
+    "command": "findconst",
+    "aliases": [],
+    "description": "Find all constants in the current module that are referenced in the disassembly.",
+    "arguments": [
+      {
+        "name": "base_address",
+        "type": "integer",
+        "description": "The base address of the module to search."
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "The size of the module or memory range to search.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of constants found."
+    }
+  },
+  {
+    "command": "findimport",
+    "aliases": [],
+    "description": "Find references to imported functions by name.",
+    "arguments": [
+      {
+        "name": "dll_name",
+        "type": "string",
+        "description": "The name of the DLL (e.g., 'kernel32.dll')."
+      },
+      {
+        "name": "function_name",
+        "type": "string",
+        "description": "The name of the imported function (e.g., 'CreateFileW')."
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The number of references to the imported function found."
+    }
+  },
+  {
+    "command": "findunicode",
+    "aliases": [],
+    "description": "Search for a Unicode string in memory.",
+    "arguments": [
+      {
+        "name": "string",
+        "type": "string",
+        "description": "The Unicode string to search for. Enclose it in quotes."
+      },
+      {
+        "name": "base_address",
+        "type": "integer",
+        "description": "Starting address for the search.",
+        "optional": true
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "Size of the memory region to search.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "Number of matches found."
+    }
+  },
+  {
+    "command": "findascii",
+    "aliases": [],
+    "description": "Search for an ASCII string in memory.",
+    "arguments": [
+      {
+        "name": "string",
+        "type": "string",
+        "description": "The ASCII string to search for. Enclose it in quotes."
+      },
+      {
+        "name": "base_address",
+        "type": "integer",
+        "description": "Starting address for the search.",
+        "optional": true
+      },
+      {
+        "name": "size",
+        "type": "integer",
+        "description": "Size of the memory region to search.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "Number of matches found."
+    }
+  }
+]
+ 
+</value>
+  </data>
+  <data name="ThreadControl" xml:space="preserve">
+    <value>[
+  {
+    "command": "createthread",
+    "aliases": ["threadcreate", "newthread", "threadnew"],
+    "description": "Creates a new thread at the specified entry point.",
+    "arguments": [
+      {
+        "name": "entry_point",
+        "type": "integer",
+        "description": "The memory address where the new thread will begin execution."
+      },
+      {
+        "name": "argument",
+        "type": "integer",
+        "description": "The argument to pass to the new thread. Defaults to 0 if not specified.",
+        "optional": true
+      }
+    ],
+    "result": {
+      "name": "$result",
+      "type": "integer",
+      "description": "The thread ID of the newly created thread."
+    }
+  },
+  {
+    "command": "switchthread",
+    "aliases": ["threadswitch"],
+    "description": "Switches the debugger's context to another thread, updating the displayed call stack and registers.",
+    "arguments": [
+      {
+        "name": "thread_id",
+        "type": "integer",
+        "description": "The ID of the thread to switch to. Defaults to the main thread if not specified.",
+        "optional": true
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "suspendthread",
+    "aliases": ["threadsuspend"],
+    "description": "Suspends the specified thread in the debuggee.",
+    "arguments": [
+      {
+        "name": "thread_id",
+        "type": "integer",
+        "description": "The ID of the thread to suspend. Defaults to the main thread if not specified.",
+        "optional": true
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "resumethread",
+    "aliases": ["threadresume"],
+    "description": "Resumes a previously suspended thread in the debuggee.",
+    "arguments": [
+      {
+        "name": "thread_id",
+        "type": "integer",
+        "description": "The ID of the thread to resume. Defaults to the main thread if not specified.",
+        "optional": true
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "killthread",
+    "aliases": ["threadkill"],
+    "description": "Terminates a thread within the debuggee.",
+    "arguments": [
+      {
+        "name": "thread_id",
+        "type": "integer",
+        "description": "The ID of the thread to terminate. Defaults to the main thread if not specified.",
+        "optional": true
+      },
+      {
+        "name": "exit_code",
+        "type": "integer",
+        "description": "The exit code to use when terminating the thread. Defaults to 0 if not specified.",
+        "optional": true
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "suspendallthreads",
+    "aliases": ["threadsuspendall"],
+    "description": "Suspends all threads in the debuggee.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "resumeallthreads",
+    "aliases": ["threadresumeall"],
+    "description": "Resumes all suspended threads in the debuggee.",
+    "arguments": [],
+    "result": null
+  },
+  {
+    "command": "setthreadpriority",
+    "aliases": ["setprioritythread", "threadsetpriority"],
+    "description": "Sets the priority of a specified thread in the debuggee.",
+    "arguments": [
+      {
+        "name": "thread_id",
+        "type": "integer",
+        "description": "The ID of the thread whose priority is to be changed."
+      },
+      {
+        "name": "priority",
+        "type": "string",
+        "description": "The new priority level. Can be an integer or one of the following strings: \"Normal\", \"AboveNormal\", \"TimeCritical\", \"Idle\", \"BelowNormal\", \"Highest\", \"Lowest\"."
+      }
+    ],
+    "result": null
+  },
+  {
+    "command": "setthreadname",
+    "aliases": ["threadsetname"],
+    "description": "Assigns a name to a specified thread for debugging purposes. This name is used only within the debugger and does not affect the debuggee.",
+    "arguments": [
+      {
+        "name": "thread_id",
+        "type": "integer",
+        "description": "The ID of the thread to name."
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The new name for the thread. If left empty, the current name will be removed.",
+        "optional": true
+      }
+    ],
+    "result": null
+  }
+]
+</value>
+  </data>
 </root>

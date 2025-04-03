@@ -17,6 +17,7 @@ namespace DotNetPlugin
 
         public bool DebugOnly { get; set; }
         public bool MCPOnly { get; set; }
+        public string MCPCmdDescription { get; set; }
 
         public CommandAttribute() { }
 
