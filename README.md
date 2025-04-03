@@ -53,6 +53,10 @@ These commands return JSON or text-formatted output that’s suitable for ingest
 ![image](https://github.com/user-attachments/assets/f954feab-4518-4368-8b0a-d6ec07212122)
 ![image](https://github.com/user-attachments/assets/2952e4eb-76ef-460c-9124-0e3c1167fa3d)
 
+## Debugging
+DotNetPlugin.Impl contains the following within the project build post commands. Update it to reflect the corret path to x64dbg for faster debugging:
+xcopy /Y /I "$(TargetDir)*.*" "C:\Users\User\Desktop\x96\release\x64\plugins\"
+C:\Users\User\Desktop\x96\release\x64\x64dbg.exe
 
 ## Actively working on implementing several functions
 Not every command is fully implemented althrough I am actively working on getting this project moving to support full stack, thread and module dumps for the AI to query.
