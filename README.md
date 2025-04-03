@@ -1,10 +1,9 @@
 # X64Dbg MCP Server
-x64Dbg MCP Server
-This project is a starting point for building an MCP (Memory Command Protocol) server plugin for x64dbg using C# on the classic Windows-only .NET Framework platform (No ASP.NET Core hosting required).
+This project is a starting point for building an MCP (Memory Command Protocol) server plugin for x96/x64/x32dbg using C# on the classic Windows-only .NET Framework platform (No ASP.NET Core hosting required).
 
-The plugin acts as a lightweight HTTP interface into x64dbg, allowing you to send structured commands to inspect memory, disassemble, query registers, manipulate labels/comments, and more—all remotely and programmatically. It’s especially useful for driving x64dbg from external tools or automating analysis workflows using an LLM MCP client.
+The plugin acts as a lightweight HTTP interface bridge between an MCP client and the debugger, allowing you to have an LLM MCP client interactively send commands to inspect memory, disassemble, query registers, manipulate labels/comments, and more—all remotely and programmatically.
 
-On top of essential bindings to the x64dbg debugger engine, this template offers a clean project structure, a built-in command system, and a simple HTTP listener that exposes your commands through a text-based API. The design encourages rapid development and quick testing through real-time plugin reloading.
+On top of essential bindings to the x64dbg debugger engine, this template offers a clean project structure, a built-in command system, and a simple HTTP listener that exposes your commands through a text-based API. 
 
 ## Features
 ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
@@ -21,13 +20,17 @@ Visual Studio Build Tools (2019 v16.7 or later)
 .NET Framework 4.7.2 SDK
 
 ## Getting Started
-Clone or fork the project: git clone <your-repo-url>
+Clone or fork the project: git clone https://github.com/AgentSmithers/x64DbgMCPServer
 
 Open the solution and build.
 
 copy the files (DotNetPluginCS\bin\x64\Debug) into the x64DBG plugin (x96\release\x64\plugins) folder to run
 ![image](https://github.com/user-attachments/assets/d307d3e0-4215-4fc4-a702-a9fd814703ac)
 ![image](https://github.com/user-attachments/assets/02eb35d8-8584-46de-83c6-b535d23976b9)
+
+Start the Debugger, goto plugins -> Click "Start MCP Server"
+
+Connect to it with your prefered MCP Client on port 3001 via SSE.
 
 ## Sample Commands
 I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
@@ -60,7 +63,7 @@ TID:        0 | EntryPoint: 0x0 | TEB: 0x0
 ```
 
 ## How It Works
-The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format back to a MCP client. Default port is 3001 using SSE.
+The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format back to a MCP client.
 
 ## Special thanks
 ⚡ With the help of DotNetPluginCS by Adams85. That and roughly ~20 hours of focused coding, MCP Protocol review resulted in a decent proof-of-concept self-contained HTTP MCP server plugin for x64dbg.
@@ -75,3 +78,5 @@ If you'd like help creating your own integration, extending this plugin, or disc
 💻 Let’s reverse engineer smarter. Not harder.
 
 Cheers 🎉
+
+Https://ControllingTheInter.net
