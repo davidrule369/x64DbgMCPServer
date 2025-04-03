@@ -20,40 +20,7 @@ Open the solution and customize the plugin name and output by editing Directory.
 
 The main logic resides in the DotNetPlugin.Impl project. Start by editing Plugin.cs — this is the entry point where plugin registration and MCP startup occurs.
 
-##Features
-Built-in HTTP Server (MCP)
-The server listens for incoming HTTP requests and maps them to registered command methods using reflection. For example:
-
-POST /message?sessionId=abc123
-{
-  "jsonrpc": "2.0",
-  "method": "GetCallStack",
-  "params": [],
-  "id": "1"
-}
-Example Extension Points
-Plugin.Commands.cs
-Define new MCP-accessible commands with the [Command] attribute. Methods can take structured arguments (like strings, integers, or arrays) and return results directly to the caller.
-
-Plugin.EventCallbacks.cs
-Register debugger event handlers with [EventCallback]. Useful for integrating your MCP logic with x64dbg's runtime (e.g. reacting to breakpoints or execution state).
-
-Plugin.ExpressionFunction.cs
-Define custom expression functions usable inside x64dbg using [ExpressionFunction]. These can return nuint values and support simple automation logic.
-
-Plugin.Menus.cs
-Add context menu items to the x64dbg UI through a fluent-style API.
-
-What It's Good For
-Building remote automation tools that interact with live debugging sessions
-
-Inspecting memory, threads, disassembly, and registers without manually operating the GUI
-
-Scripted fuzzing, analysis, and patching workflows
-
-Extending x64dbg with your own protocols or APIs
-
-Features
+## Features
 ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
 
 ✅ Lightweight, zero-dependency binary deployment
@@ -68,7 +35,7 @@ Features
 
 ✅ Expression function and menu extension support
 
-##Sample Commands
+## Sample Commands
 Once the MCP server is running (via the plugin menu in x64dbg), you can issue commands like:
 
 ExecuteDebuggerCommand command=init C:\PathTo\Binary.exe
@@ -83,7 +50,7 @@ GetCallStack
 GetAllModulesFromMemMap
 These commands return JSON or text-formatted output that’s suitable for ingestion by AI models or integration scripts. Example:
 
-##Actively working on implementing several functions
+## Actively working on implementing several functions
 [GetAllActiveThreads] Found 4 active threads:
 TID: 121428560 | EntryPoint: 0x0 | TEB: 0x0
 TID:        0 | EntryPoint: 0x0 | TEB: 0x0
@@ -91,13 +58,13 @@ TID:        0 | EntryPoint: 0x0 | TEB: 0x0
 TID:        0 | EntryPoint: 0x0 | TEB: 0x0
 I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
 
-##How It Works
+## How It Works
 The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format. Think of it as a bridge between web-friendly tools and native debugging environments.
 
-##Special thanks
+## Special thanks
 ⚡ With the help of DotNetPluginCS by Adams85. That and roughly ~20 hours of focused coding, MCP Protocol review resulted in a decent proof-of-concept self-contained HTTP MCP server plugin for x64dbg.
 
-##Integration Notes
+## Integration Notes
 One of the most satisfying aspects of this project was overcoming the challenge of building an HTTP server entirely self-contained — no Kestrel, no ASP.NET, just raw HttpListener powering your reverse engineering automation.
 
 I plan to continue improving this codebase as part of my journey into AI-assisted analysis, implementation security, and automation tooling.
