@@ -1,49 +1,64 @@
-# DotNetPluginCS - A .NET Framework plugin template for x86dbg
-This project provides a foundation for developing plugins for [x64dbg](https://x64dbg.com/) in C#, on the .NET platform. (.NET means the "classic", Windows-only .NET Framework in this case.)
+# X64Dbg MCP Server
+x64Dbg MCP Server
+This project provides a foundation for building an MCP (Memory Command Protocol) server plugin for x64dbg using C# on the classic Windows-only .NET Framework platform.
 
-On top of defining essential native bindings which are necessary to interact with the debugger host, it also provides a straightforward project structure and an ergonomic wrapper API over the aforementioned low-level bindings.
+The plugin acts as a lightweight HTTP interface into x64dbg, allowing you to send structured commands to inspect memory, disassemble, query registers, manipulate labels/comments, and more—all remotely and programmatically. It’s especially useful for driving x64dbg from external tools or automating analysis workflows.
 
-The template is architected so that it can speed up test-change-test development cycles greatly. At development time, whenever you need to make a change during testing, you'll only have to rebuild your plugin and it will be reloaded automatically into the host.
+On top of essential bindings to the x64dbg debugger engine, this template offers a clean project structure, a built-in command system, and a simple HTTP listener that exposes your commands through a text-based API. The design encourages rapid development and quick testing through real-time plugin reloading.
 
 ## Prerequisites
-To build the project, you'll minimally need
-* [Visual Studio Build Tools](https://docs.microsoft.com/hu-hu/visualstudio/releases/2019/history) (2019 v16.7 or later)
-* [.NET Core 3.1/.NET 6+ SDK](https://dotnet.microsoft.com/en-us/download/dotnet) (required only for building)
-* [.NET Framework 4.7.2  SDK](https://dotnet.microsoft.com/en-us/download/dotnet-framework/net472)
+To build and run this project, you'll need:
 
-However, probably you'd just have an easier time with the full [Visual Studio IDE](https://visualstudio.microsoft.com/) (2019 v16.7 or later, Community edition is sufficient) since that includes all of the required components. Other IDEs which support C# 9 might also do but it's not tested.
+Visual Studio Build Tools (2019 v16.7 or later)
+
+.NET Framework 4.7.2 SDK
+
+.NET Core 3.1 or .NET 6+ SDK (optional, for utilities)
+
+While it's possible to build with just the CLI tools, using the full Visual Studio IDE (Community edition is fine) is highly recommended for the best experience. Other editors supporting C# 9+ may work but haven’t been tested.
 
 ## Getting Started
+Clone or fork the project: git clone <your-repo-url>
 
-1. Fork the project and create a local copy (`git clone <fork-url>`).
-2. Open *Directory.Build.props* and change the `PluginName` and `PluginAssemblyName` properties to your liking.
-3. The actual implementation of the plugin logic resides in the _DotNetPlugin.Impl_ project. (Usually you won’t need to touch the other ones.) So, open *DotNetPlugin.Impl/Plugin.cs*, which is the entry point to your code. You find some further information there.
-5. You can quickly start to implement your ideas by examining the samples to be found in the following files:
-   * *Plugin.Commands.cs* - Here you can define custom [commands](https://help.x64dbg.com/en/latest/introduction/Input.html#commands) using the `Command` attribute. Methods marked with this attribute will be automatically discovered (using reflection) and registered. (Both static and instance methods are allowed as handlers, they just need to have the right signature. Return type can be `void`, in which case the command will always report success.) 
-   * *Plugin.EventCallbacks.cs* - Here you can register [callbacks](https://help.x64dbg.com/en/latest/developers/plugins/basics.html#exports) to get notified of debugger events. Use the `EventCallback` attribute to make them automatically registered, just like in the case of commands. Further remarks: pay close attention to the method signature. The parameter type must match the event type specified in the attribute, otherwise it won't work. You can look up this mapping e.g. in [the plugin SDK definition](https://github.com/x64dbg/x64dbg/blob/29bb559aa6ac5155ff518b43f3c84f4a72abd8bf/src/dbg/_plugins.h#L260). Also keep in mind [this warning from the docs](https://help.x64dbg.com/en/latest/developers/plugins/Callbacks/index.html):
-     > In general AVOID time-consuming operations inside callbacks, do these in separate threads.
-   *  *Plugin.ExpressionFunction.cs* - Here you can define [expression functions](https://help.x64dbg.com/en/latest/introduction/Expression-functions.html) using the `ExpressionFunction` attribute. Works in the same way as commands. The return type, however, must always be `nuint` (`UIntPtr`).
-   *  *Plugin.Menus.cs* - In the `SetupMenu` method you can register menu items and sub-menus via a fluent-like API to extend the various menus of the host.
+Open the solution and customize the plugin name and output by editing Directory.Build.props
 
-## Development
-After implementing something useful, you can test your plugin like this:
-1. Build the `DotNetPlugin.Impl` project (or the whole solution - the end result should be the same) **in *Debug* configuration**. 
-2. In the root directory of the project a folder named *bin* will be created. Locate the *.dp32*/*.dp64* file (depending on the target CPU architecture of the build). Copy that file together with *DotNetPlugin.RemotingHelper.dll* to the corresponding *plugins* directory of x64dbg.
-3. Run the debugger.
-4. Test your plugin.
-5. Modify the plugin if needed and rebuild it. At this point it will be automatically reloaded, so goto 4 until you're satisfied.
+The main logic resides in the DotNetPlugin.Impl project. Start by editing Plugin.cs — this is the entry point where plugin registration and MCP startup occurs.
 
-## Release
-When you decide that the plugin is ready for use, you can create a performance-optimized version of it. So, change the **build configuration to *Release*** and build it. Now you'll only need the single *.dp32*/*.dp64* file.
+Features
+Built-in HTTP Server (MCP)
+The server listens for incoming HTTP requests and maps them to registered command methods using reflection. For example:
 
-## Samples
-* [tracecalls](https://github.com/adams85/DotNetPluginCS/tree/tracecalls) by adams85 - An attempt on implementing WinDbg's `wt` command (or at least something similar to that) for x64dbg.
+bash
+Copy
+Edit
+POST /message?sessionId=abc123
+{
+  "jsonrpc": "2.0",
+  "method": "GetCallStack",
+  "params": [],
+  "id": "1"
+}
+Example Extension Points
+Plugin.Commands.cs
+Define new MCP-accessible commands with the [Command] attribute. Methods can take structured arguments (like strings, integers, or arrays) and return results directly to the caller.
 
-## Project Status
-The wiring-up to the host is pretty much complete now and it's wrapped in a more ergonomic API (though the low-level APIs are also available if needed).
+Plugin.EventCallbacks.cs
+Register debugger event handlers with [EventCallback]. Useful for integrating your MCP logic with x64dbg's runtime (e.g. reacting to breakpoints or execution state).
 
-However, many functions exposed by the host (especially, C++ APIs) are still missing. Currently there's no plan to add bindings for these to make them available out of the box. Plugin writers can add them manually as needed. Pushing such changes back upstream would be greatly appreciated.
+Plugin.ExpressionFunction.cs
+Define custom expression functions usable inside x64dbg using [ExpressionFunction]. These can return nuint values and support simple automation logic.
 
-As an alternative, you can use the more complete bindings of the [DotX64Dbg](https://github.com/x64dbg/DotX64Dbg), another .NET plugin project. This one runs on .NET Core and uses a different approach but the bindings defined there (using C++/CLI) can be used with this solution too. A proof of concept for this can be found [here](https://github.com/adams85/DotNetPluginCS/tree/dotx64dbg-backport).
+Plugin.Menus.cs
+Add context menu items to the x64dbg UI through a fluent-style API.
 
-### Happy coding & debugging! 
+What It's Good For
+Building remote automation tools that interact with live debugging sessions
+
+Inspecting memory, threads, disassembly, and registers without manually operating the GUI
+
+Scripted fuzzing, analysis, and patching workflows
+
+Extending x64dbg with your own protocols or APIs
+
+How It Works
+The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format. Think of it as a bridge between web-friendly tools and native debugging environments.
