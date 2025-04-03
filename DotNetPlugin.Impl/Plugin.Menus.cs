@@ -10,6 +10,9 @@ namespace DotNetPlugin
         protected override void SetupMenu(Menus menus)
         {
             menus.Main
+                .AddAndConfigureItem("&StartMCPServer", StartMCPServer).SetIcon(Resources.AboutIcon).Parent
+                .AddAndConfigureItem("&StopMCPServer", StopMCPServer).SetIcon(Resources.AboutIcon).Parent
+                .AddAndConfigureItem("&CustomCommand", ExecuteCustomCommand).SetIcon(Resources.AboutIcon).Parent
                 .AddAndConfigureItem("&About...", OnAboutMenuItem).SetIcon(Resources.AboutIcon).Parent
                 .AddAndConfigureItem("&DotNetDumpProcess", OnDumpMenuItem).SetHotKey("CTRL+F12").Parent
                 .AddAndConfigureSubMenu("sub menu")
@@ -31,6 +34,24 @@ namespace DotNetPlugin
                 return;
             }
             Bridge.DbgCmdExec("DotNetDumpProcess");
+        }
+
+        public static void ExecuteCustomCommand(MenuItem menuItem)
+        {
+            if (!Bridge.DbgIsDebugging())
+            {
+                Console.WriteLine("You need to be debugging to use this Command");
+                return;
+            }
+            Bridge.DbgCmdExec("DumpModuleToFile");
+        }
+        public static void StartMCPServer(MenuItem menuItem)
+        {
+            Bridge.DbgCmdExec("StartMCPServer");
+        }
+        public static void StopMCPServer(MenuItem menuItem)
+        {
+            Bridge.DbgCmdExec("StopMCPServer");
         }
     }
 }

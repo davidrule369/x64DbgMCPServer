@@ -1,11 +1,20 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Runtime.Remoting.Messaging;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using DotNetPlugin.NativeBindings;
 using DotNetPlugin.NativeBindings.Script;
 using DotNetPlugin.NativeBindings.SDK;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
+using static DotNetPlugin.NativeBindings.SDK.Bridge;
 
 namespace DotNetPlugin
 {
@@ -73,5 +82,1148 @@ namespace DotNetPlugin
                     Console.WriteLine($"    {section.addr.ToPtrString()} \"{section.name}\"");
             }
         }
+
+        static SimpleMcpServer GSimpleMcpServer;
+
+        [Command("StartMCPServer", DebugOnly = false)]
+        public static void cbStartMCPServer(string[] args)
+        {
+            Console.WriteLine("Starting MCPServer");
+            GSimpleMcpServer = new SimpleMcpServer(typeof(DotNetPlugin.Plugin));
+            GSimpleMcpServer.Start();
+            Console.WriteLine("MCPServer Started");
+        }
+
+        [Command("StopMCPServer", DebugOnly = false)]
+        public static void cbStopMCPServer(string[] args)
+        {
+            Console.WriteLine("Stopping MCPServer");
+            GSimpleMcpServer.Stop();
+            GSimpleMcpServer = null;
+            Console.WriteLine("MCPServer Stopped");
+        }
+
+        /// <summary>
+        /// Executes a debugger command synchronously using x64dbg's command engine.
+        ///
+        /// This function wraps the native `DbgCmdExecDirect` API to simplify command execution.
+        /// It blocks until the command has finished executing.
+        ///
+        /// Examples:
+        ///   ExecuteDebuggerCommand("init C:\Path\To\Program.exe");   // Loads an executable
+        ///   ExecuteDebuggerCommand("stop");                          // Restarts the current debugging session
+        ///   ExecuteDebuggerCommand("run");                              // Starts execution
+        /// </summary>
+        /// <param name="command">The debugger command string to execute.</param>
+        /// <returns>True if the command executed successfully, false otherwise.</returns>
+        [Command("ExecuteDebuggerCommand", DebugOnly = false)]
+        public static bool ExecuteDebuggerCommand(string[] command)
+        {
+            return DbgCmdExec(command[0]);
+        }
+
+        [Command("ExecuteDebuggerCommandDirect", DebugOnly = false)]
+        public static bool ExecuteDebuggerCommandDirect(string[] args)
+        {
+            return ExecuteDebuggerCommandDirect(args[0]);
+        }
+        public static bool ExecuteDebuggerCommandDirect(string command)
+        {
+            return DbgCmdExecDirect(command);
+        }
+
+        //[Command("ReadMemory", DebugOnly = false)]
+        //public static bool ReadMemory(string[] args)
+        //{
+        //    if (args.Length != 2)
+        //    {
+        //        Console.WriteLine("Usage: ReadMemory <address> <size>");
+        //        return false;
+        //    }
+
+        //    try
+        //    {
+        //        // Parse address (supports hex or decimal)
+        //        nuint address = (nuint)Convert.ToUInt64(
+        //            args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[0].Substring(2) : args[0],
+        //            args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+        //        );
+
+        //        // Parse size
+        //        uint size = uint.Parse(args[1]);
+
+        //        var memory = ReadMemory(address, size);
+
+        //        if (memory == null)
+        //        {
+        //            Console.WriteLine($"[ReadMemory] Failed to read memory at 0x{address:X}");
+        //            return false;
+        //        }
+
+        //        Console.WriteLine($"[ReadMemory] {size} bytes at 0x{address:X}:");
+
+        //        for (int i = 0; i < memory.Length; i += 16)
+        //        {
+        //            var chunk = memory.Skip(i).Take(16).ToArray();
+        //            string hex = BitConverter.ToString(chunk).Replace("-", " ").PadRight(48);
+        //            string ascii = string.Concat(chunk.Select(b => b >= 32 && b <= 126 ? (char)b : '.'));
+        //            Console.WriteLine($"{address + (nuint)i:X8}: {hex} {ascii}");
+        //        }
+
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"[ReadMemory] Error: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+
+
+        public static byte[] ReadMemory(nuint address, uint size)
+        {
+            byte[] buffer = new byte[size];
+            if (!Bridge.DbgMemRead(address, buffer, size)) // assume NativeBridge is a P/Invoke wrapper
+                return null;
+            return buffer;
+        }
+
+        //[Command("WriteMemory", DebugOnly = true, MCPOnly = true)]
+        //public static bool WriteMemory(string[] args)
+        //{
+        //    if (args.Length < 2)
+        //    {
+        //        Console.WriteLine("Usage: WriteMemory <address> <byte1> <byte2> ...");
+        //        Console.WriteLine("Example: WriteMemory 0x7FF600001000 48 8B 05");
+        //        return false;
+        //    }
+
+        //    try
+        //    {
+        //        // Parse address (hex or decimal)
+        //        nuint address = (nuint)Convert.ToUInt64(
+        //            args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[0].Substring(2) : args[0],
+        //            args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+        //        );
+
+        //        // Parse byte values (can be "48", "0x48", etc.)
+        //        byte[] data = args.Skip(1).Select(b =>
+        //        {
+        //            b = b.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? b.Substring(2) : b;
+        //            return byte.Parse(b, NumberStyles.HexNumber);
+        //        }).ToArray();
+
+        //        // Dump what we're about to write
+        //        Console.WriteLine($"[WriteMemory] Writing {data.Length} bytes to 0x{address:X}:");
+        //        Console.WriteLine(BitConverter.ToString(data).Replace("-", " "));
+
+        //        // Perform the memory write
+        //        if (!WriteMemory(address, data))
+        //        {
+        //            Console.WriteLine($"[WriteMemory] Failed to write to memory at 0x{address:X}");
+        //            return false;
+        //        }
+
+        //        Console.WriteLine($"[WriteMemory] Successfully wrote to 0x{address:X}");
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"[WriteMemory] Error: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+
+        public static bool WriteMemory(nuint address, byte[] data)
+        {
+            return Bridge.DbgMemWrite(address, data, (uint)data.Length);
+        }
+
+        //[Command("WriteBytesToAddress", DebugOnly = true)]
+        //public static bool WriteBytesToAddress(string[] args)
+        //{
+        //    if (args.Length < 2)
+        //    {
+        //        Console.WriteLine("Usage: WriteBytesToAddress <address> <byte1> <byte2> ...");
+        //        Console.WriteLine("Example: WriteBytesToAddress 0x7FF600001000 48 8B 05");
+        //        return false;
+        //    }
+
+        //    string addressStr = args[0];
+
+        //    try
+        //    {
+        //        // Convert string[] to byte[]
+        //        byte[] data = args.Skip(1).Select(b =>
+        //        {
+        //            b = b.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? b.Substring(2) : b;
+        //            return byte.Parse(b, NumberStyles.HexNumber);
+        //        }).ToArray();
+
+        //        // Dump what we're about to write
+        //        Console.WriteLine($"[WriteBytesToAddress] Writing {data.Length} bytes to {addressStr}:");
+        //        Console.WriteLine(BitConverter.ToString(data).Replace("-", " "));
+
+        //        // Call existing function
+        //        return WriteBytesToAddress(addressStr, data);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"[WriteBytesToAddress] Error: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+        //public static bool WriteBytesToAddress(string addressStr, byte[] data)
+        //{
+        //    if (data == null || data.Length == 0)
+        //    {
+        //        Console.WriteLine("Data is null or empty.");
+        //        return false;
+        //    }
+
+        //    if (!ulong.TryParse(addressStr.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+        //    {
+        //        Console.WriteLine($"Invalid address: {addressStr}");
+        //        return false;
+        //    }
+
+        //    IntPtr ptr = new IntPtr((long)parsed);
+        //    nuint address = (nuint)ptr.ToInt64();
+
+        //    bool success = WriteMemory(address, data);
+
+        //    if (success)
+        //    {
+        //        Console.WriteLine($"Successfully wrote {data.Length} bytes at 0x{address:X}");
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine($"Failed to write memory at 0x{address:X}");
+        //    }
+
+        //    return success;
+        //}
+
+        [Command("WriteMemToAddress", DebugOnly = true, MCPOnly = true)]
+        public static string WriteMemToAddress(string addressStr, string byteString)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(byteString))
+                    return "Error: Byte string is empty.";
+
+                // Parse address
+                if (!ulong.TryParse(addressStr.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+                    return $"Error: Invalid address: {addressStr}";
+
+                nuint address = (nuint)parsed;
+
+                // Parse byte string (e.g., "90 89 78")
+                string[] byteParts = byteString.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                byte[] data = byteParts.Select(b =>
+                {
+                    if (b.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                        b = b.Substring(2);
+                    return byte.Parse(b, NumberStyles.HexNumber);
+                }).ToArray();
+
+                if (data.Length == 0)
+                    return "Error: No valid bytes found to write.";
+
+                // Write memory
+                bool success = WriteMemory(address, data);
+
+                if (success)
+                {
+                    return $"Successfully wrote {data.Length} byte(s) to 0x{address:X}:\r\n{BitConverter.ToString(data)}";
+                }
+                else
+                {
+                    return $"Failed to write memory at 0x{address:X}";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"[WriteBytesToAddress] Error: {ex.Message}";
+            }
+        }
+
+        [Command("CommentOrLabelAtAddress", DebugOnly = true, MCPOnly = true)]
+        public static string CommentOrLabelAtAddress(string addressStr, string value, string mode = "Label")
+        {
+            try
+            {
+                bool success = false;
+                // Parse address
+                if (!ulong.TryParse(addressStr.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+                    return $"Error: Invalid address: {addressStr}";
+
+                nuint address = (nuint)parsed;
+
+                if (string.Equals(mode, "Label", StringComparison.OrdinalIgnoreCase))
+                {
+                    success = Bridge.DbgSetLabelAt(address, value);
+                    Console.WriteLine($"Label '{value}' added at {address:X} (byte pattern match)");
+                }
+                else if (string.Equals(mode, "Comment", StringComparison.OrdinalIgnoreCase))
+                {
+                    success = Bridge.DbgSetCommentAt(address, value);
+                    Console.WriteLine($"Comment '{value}' added at {address:X} (byte pattern match)");
+                }
+                if (success)
+                {
+                    return $"Successfully wrote {value} to addressStr as {mode}";
+                }
+                else
+                {
+                    return $"Failed to write memory at 0x{address:X}";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"[WriteBytesToAddress] Error: {ex.Message}";
+            }
+        }
+
+        public static bool PatchWithNops(string[] args)
+        {
+            return PatchWithNops(args[0], Convert.ToInt32(args[1]));
+        }
+        public static bool PatchWithNops(string addressStr, int nopCount = 7)
+        {
+            if (!ulong.TryParse(addressStr.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+            {
+                Console.WriteLine($"Invalid address: {addressStr}");
+                return false;
+            }
+
+            IntPtr ptr = new IntPtr((long)parsed);
+            nuint address = (nuint)ptr.ToInt64();
+
+            byte[] nops = Enumerable.Repeat((byte)0x90, nopCount).ToArray();
+            bool success = WriteMemory(address, nops);
+
+            if (success)
+            {
+                Console.WriteLine($"Successfully patched {nopCount} NOPs at 0x{address:X}");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to write memory at 0x{address:X}");
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// Parses a string of hexadecimal byte values separated by hyphens into a byte array.
+        /// </summary>
+        /// <param name="pattern">
+        /// A string containing hexadecimal byte values, e.g., "75-38" or "90-90-CC".
+        /// Each byte must be two hex digits and separated by hyphens.
+        /// </param>
+        /// <returns>
+        /// A byte array representing the parsed hex values.
+        /// </returns>
+        /// <example>
+        /// byte[] bytes = ParseBytePattern("75-38"); // returns new byte[] { 0x75, 0x38 }
+        /// </example>
+        public static byte[] ParseBytePattern(string pattern)
+        {
+            return pattern.Split('-').Select(b => Convert.ToByte(b, 16)).ToArray();
+        }
+
+        //[Command("GetLabel", DebugOnly = true)]
+        //public static bool GetLabel(string[] args)
+        //{
+        //    if (args.Length != 1)
+        //    {
+        //        Console.WriteLine("Usage: GetLabel <address>");
+        //        Console.WriteLine("Example: GetLabel 0x7FF600001000");
+        //        return false;
+        //    }
+
+        //    try
+        //    {
+        //        // Parse address (supports hex and decimal)
+        //        nuint address = (nuint)Convert.ToUInt64(
+        //            args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[0].Substring(2) : args[0],
+        //            args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+        //        );
+
+        //        string label = GetLabel(address);
+
+        //        if (label != null)
+        //        {
+        //            Console.WriteLine($"[GetLabel] Label at 0x{address:X}: {label}");
+        //            return true;
+        //        }
+        //        else
+        //        {
+        //            Console.WriteLine($"[GetLabel] No label found at 0x{address:X}");
+        //            return false;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"[GetLabel] Error: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+
+        [Command("GetLabel", DebugOnly = true, MCPOnly = true)]
+        public static string GetLabel(string addressStr)
+        {
+            try
+            {
+                // Parse address (supports hex or decimal)
+                nuint address = (nuint)Convert.ToUInt64(
+                    addressStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? addressStr.Substring(2) : addressStr,
+                    addressStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                );
+
+                string label = GetLabel(address);
+
+                if (!string.IsNullOrEmpty(label))
+                    return $"[GetLabel] Label at 0x{address:X}: {label}";
+                else
+                    return $"[GetLabel] No label found at 0x{address:X}";
+            }
+            catch (Exception ex)
+            {
+                return $"[GetLabel] Error: {ex.Message}";
+            }
+        }
+
+        public static string GetLabel(nuint address)
+        {
+            return Bridge.DbgGetLabelAt(address, SEGMENTREG.SEG_DEFAULT, out var label) ? label : null;
+        }
+
+
+        string TryGetDereferencedString(nuint address)
+        {
+            var data = ReadMemory(address, 64); // read 64 bytes (arbitrary)
+            int end = Array.IndexOf(data, (byte)0);
+            if (end <= 0) return null;
+            return Encoding.ASCII.GetString(data, 0, end);
+        }
+
+
+        public static void LabelIfCallTargetMatches(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: LabelIfCallTargetMatches <address> <targetAddress> [labelOrComment] [mode: Label|Comment]");
+                Console.WriteLine("Example: LabelIfCallTargetMatches 0x7FF600001000 0x7FF600002000 MyLabel Label");
+                return;
+            }
+
+            try
+            {
+                // Parse input addresses
+                nuint address = (nuint)Convert.ToUInt64(
+                    args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[0].Substring(2) : args[0],
+                    args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                );
+
+                nuint targetAddress = (nuint)Convert.ToUInt64(
+                    args[1].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[1].Substring(2) : args[1],
+                    args[1].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                );
+
+                // Optional label + mode
+                string value = "test";
+                string mode = "Label";
+
+                if (args.Length == 3)
+                {
+                    value = args[2];
+                }
+                else if (args.Length >= 4)
+                {
+                    value = args[args.Length - 2];
+                    mode = args[args.Length - 1];
+                }
+
+                // Disassemble at the given address
+                Bridge.BASIC_INSTRUCTION_INFO disasm = new Bridge.BASIC_INSTRUCTION_INFO();
+                Bridge.DbgDisasmFastAt(address, ref disasm);
+              
+
+                LabelIfCallTargetMatches(address, ref disasm, targetAddress, value, mode);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[LabelIfCallTargetMatches] Error: {ex.Message}");
+            }
+        }
+        public static void LabelIfCallTargetMatches(nuint address, ref Bridge.BASIC_INSTRUCTION_INFO disasm, nuint targetAddress, string value = "test", string mode = "Label")
+        {
+            if (disasm.addr == targetAddress)
+            {
+                if (string.Equals(mode, "Label", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bridge.DbgSetLabelAt(address, value);
+                    Console.WriteLine($"Label '{value}' added at {address:X}");
+                }
+                else if (string.Equals(mode, "Comment", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bridge.DbgSetCommentAt(address, value);
+                    Console.WriteLine($"Comment '{value}' added at {address:X}");
+                }
+            }
+        }
+
+        public static bool LabelMatchingInstruction(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: LabelMatchingInstruction <address> <instruction> [labelOrComment] [mode: Label|Comment]");
+                Console.WriteLine("Example: LabelMatchingInstruction 0x7FF600001000 \"jnz 0x140001501\" MyLabel Label");
+                return false;
+            }
+
+            try
+            {
+                // Parse address
+                nuint address = (nuint)Convert.ToUInt64(
+                    args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[0].Substring(2) : args[0],
+                    args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                );
+
+                string instruction = args[1];
+                string label = "test";
+                string mode = "Label";
+
+                if (args.Length == 3)
+                {
+                    label = args[2];
+                }
+                else if (args.Length >= 4)
+                {
+                    label = args[args.Length - 2];
+                    mode = args[args.Length - 1];
+                }
+
+                Bridge.BASIC_INSTRUCTION_INFO disasm = new Bridge.BASIC_INSTRUCTION_INFO();
+                Bridge.DbgDisasmFastAt(address, ref disasm);
+
+                LabelMatchingInstruction(address, ref disasm, instruction, label, mode);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[LabelMatchingInstruction] Error: {ex.Message}");
+                return false;
+            }
+        }
+        public static void LabelMatchingInstruction(nuint address, ref Bridge.BASIC_INSTRUCTION_INFO disasm, string targetInstruction = "jnz 0x0000000140001501", string value = "test", string mode = "Label")
+        {
+            if (string.Equals(disasm.instruction, targetInstruction, StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(mode, "Label", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bridge.DbgSetLabelAt(address, value);
+                    Console.WriteLine($"Label 'test' added at {address:X}");
+                }
+                else if (string.Equals(mode, "Comment", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bridge.DbgSetCommentAt(address, value);
+                    Console.WriteLine($"Comment 'test' added at {address:X}");
+                }
+            }
+        }
+
+        public static void LabelMatchingBytes(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: LabelMatchingBytes <address> <byte1> <byte2> ... [labelOrComment] [mode: Label|Comment]");
+                Console.WriteLine("Example: LabelMatchingBytes 0x7FF600001000 48 8B 05 MyLabel Label");
+                return;
+            }
+
+            try
+            {
+                // Parse address
+                nuint address = (nuint)Convert.ToUInt64(
+                    args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? args[0].Substring(2) : args[0],
+                    args[0].StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                );
+
+                // Default values
+                string value = "test";
+                string mode = "Label";
+
+                // Determine how many arguments belong to byte pattern
+                int byteCount = args.Length - 1;
+
+                if (args.Length >= 3)
+                {
+                    string lastArg = args[args.Length - 1];
+                    string secondLastArg = args[args.Length - 2];
+
+                    bool lastIsMode = lastArg.Equals("Label", StringComparison.OrdinalIgnoreCase)
+                                   || lastArg.Equals("Comment", StringComparison.OrdinalIgnoreCase);
+
+                    if (lastIsMode)
+                    {
+                        mode = lastArg;
+                        value = secondLastArg;
+                        byteCount -= 2;
+                    }
+                    else
+                    {
+                        value = lastArg;
+                        byteCount -= 1;
+                    }
+                }
+
+                // Parse bytes
+                var pattern = args.Skip(1).Take(byteCount).Select(b =>
+                {
+                    if (b.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                        b = b.Substring(2);
+                    return byte.Parse(b, NumberStyles.HexNumber);
+                }).ToArray();
+
+                // Call the memory-labeling function
+                LabelMatchingBytes(address, pattern, value, mode);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[LabelMatchingBytes] Error: {ex.Message}");
+            }
+        }
+
+
+       
+
+        public static void LabelMatchingBytes(nuint address, byte[] pattern, string value = "test", string mode = "Label")
+        {
+            try
+            {
+                byte[] actualBytes = ReadMemory(address, (uint)pattern.Length);
+
+                if (actualBytes.Length != pattern.Length)
+                    return;
+
+                for (int i = 0; i < pattern.Length; i++)
+                {
+                    if (actualBytes[i] != pattern[i])
+                        return;
+                }
+
+                if (string.Equals(mode, "Label", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bridge.DbgSetLabelAt(address, value);
+                    Console.WriteLine($"Label '{value}' added at {address:X} (byte pattern match)");
+                }
+                else if (string.Equals(mode, "Comment", StringComparison.OrdinalIgnoreCase))
+                {
+                    Bridge.DbgSetCommentAt(address, value);
+                    Console.WriteLine($"Comment '{value}' added at {address:X} (byte pattern match)");
+                }
+            }
+            catch
+            {
+                // Fail quietly on bad memory read
+            }
+        }
+
+        [Command("GetAllModulesFromMemMap", DebugOnly = true, MCPOnly = true)]
+        public static string GetAllModulesFromMemMap()
+        {
+            try
+            {
+                var modules = GetAllModulesFromMemMapFunc();
+
+                if (modules.Count == 0)
+                    return "[GetAllModulesFromMemMap] No image modules found in memory map.";
+
+                var output = new StringBuilder();
+                output.AppendLine($"[GetAllModulesFromMemMap] Found {modules.Count} image modules:");
+
+                foreach (var (Name, Base, End) in modules)
+                {
+                    output.AppendLine($"{Name,-30} 0x{Base:X16} - 0x{End:X16}");
+                }
+
+                return output.ToString().TrimEnd(); // remove trailing newline
+            }
+            catch (Exception ex)
+            {
+                return $"[GetAllModulesFromMemMap] Error: {ex.Message}";
+            }
+        }
+
+        public static List<(string Name, nuint Base, nuint End)> GetAllModulesFromMemMapFunc()
+        {
+            var result = new List<(string Name, nuint Base, nuint End)>();
+
+            MEMMAP memMap = new MEMMAP
+            {
+                page = new MEMMAPENTRY[128] // ensure array is allocated
+            };
+
+            if (!Bridge.DbgMemMap(ref memMap))
+            {
+                Console.WriteLine("Failed to retrieve memory map.");
+                return result;
+            }
+
+            Console.WriteLine("Memory map count: " + memMap.count);
+
+            int max = Math.Min(memMap.page.Length, (int)memMap.count);
+            for (int i = 0; i < max; i++)
+            {
+                var entry = memMap.page[i];
+
+                if (!string.IsNullOrEmpty(entry.info) && entry.info.Contains("Image"))
+                {
+                    nuint start = entry.addr;
+                    nuint end = start + entry.size;
+                    result.Add((entry.name, start, end));
+                }
+            }
+
+            return result;
+        }
+
+        [Command("GetCallStack", DebugOnly = true, MCPOnly = true)]
+        public static string GetCallStack(int maxFrames = 32)
+        {
+            try
+            {
+                var callstack = GetCallStackFunc(maxFrames);
+
+                if (callstack.Count == 0)
+                    return "[GetCallStack] No call stack could be retrieved.";
+
+                var output = new StringBuilder();
+                output.AppendLine($"[GetCallStack] Retrieved {callstack.Count} frames:");
+
+                for (int i = 0; i < callstack.Count; i++)
+                {
+                    output.AppendLine($"Frame {i,2}: 0x{callstack[i]:X}");
+                }
+
+                return output.ToString().TrimEnd(); // remove trailing newline
+            }
+            catch (Exception ex)
+            {
+                return $"[GetCallStack] Error: {ex.Message}";
+            }
+        }
+
+        public static List<nuint> GetCallStackFunc(int maxFrames = 32)
+        {
+            List<nuint> callstack = new List<nuint>();
+
+            nuint rbp = Bridge.DbgValFromString("rbp");
+            nuint rsp = Bridge.DbgValFromString("rsp");
+
+            for (int i = 0; i < maxFrames; i++)
+            {
+                // Read return address (next value after saved RBP)
+                byte[] addrBuffer = new byte[8]; // 64-bit address
+                if (!Bridge.DbgMemRead(rbp + 8, addrBuffer, 8))
+                    break;
+
+                nuint returnAddress = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
+                if (returnAddress == 0)
+                    break;
+
+                callstack.Add(returnAddress);
+
+                // Read the previous RBP
+                if (!Bridge.DbgMemRead(rbp, addrBuffer, 8))
+                    break;
+
+                rbp = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
+                if (rbp == 0 || rbp < rsp)
+                    break; // Invalid frame or stack unwound
+            }
+
+            return callstack;
+        }
+
+        [Command("GetAllActiveThreads", DebugOnly = true, MCPOnly = true)]
+        public static string GetAllActiveThreads()
+        {
+            try
+            {
+                var threads = GetAllActiveThreadsFunc();
+                var output = new StringBuilder();
+
+                output.AppendLine($"[GetAllActiveThreads] Found {threads.Count} active threads:");
+
+                foreach (var (ThreadId, EntryPoint, TEB) in threads)
+                {
+                    output.AppendLine($"TID: {ThreadId,6} | EntryPoint: 0x{EntryPoint:X} | TEB: 0x{TEB:X}");
+                }
+
+                return output.ToString().TrimEnd(); // Removes trailing newline
+            }
+            catch (Exception ex)
+            {
+                return $"[GetAllActiveThreads] Error: {ex.Message}";
+            }
+        }
+
+        public static List<(uint ThreadId, nuint EntryPoint, nuint TEB)> GetAllActiveThreadsFunc()
+        {
+            var result = new List<(uint, nuint, nuint)>();
+
+            THREADLIST threadList = new THREADLIST
+            {
+                Entries = new THREADENTRY[256]
+            };
+
+            DbgGetThreadList(ref threadList);
+
+            for (int i = 0; i < threadList.Count; i++)
+            {
+                var t = threadList.Entries[i];
+                result.Add((t.ThreadId, t.ThreadEntry, t.TebBase));
+            }
+
+            return result;
+        }
+
+
+
+        [Command("GetAllRegisters", DebugOnly = true, MCPOnly = true)]
+        public static string GetAllRegistersAsStrings()
+        {
+            string[] regNames = new[]
+            {
+                "rax", "rbx", "rcx", "rdx",
+                "rsi", "rdi", "rbp", "rsp",
+                "r8",  "r9",  "r10", "r11",
+                "r12", "r13", "r14", "r15",
+                "rip"
+            };
+
+            List<string> result = new List<string>();
+
+            foreach (string reg in regNames)
+            {
+                try
+                {
+                    nuint val = Bridge.DbgValFromString(reg);
+                    result.Add($"{reg.ToUpper(),-4}: {val.ToPtrString()}");
+                }
+                catch
+                {
+                    result.Add($"{reg.ToUpper(),-4}: <unavailable>");
+                }
+            }
+
+            return string.Join("\r\n", result);
+        }
+
+
+        [Command("ReadMemAtAddress", DebugOnly = true, MCPOnly = true)]
+        public static string ReadMemAtAddress(string addressStr, int byteCount)
+        {
+            try
+            {
+                // Parse address string
+                nuint address = (nuint)Convert.ToUInt64(
+                    addressStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? addressStr.Substring(2) : addressStr,
+                    addressStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                );
+
+                int instructionCount = 0;
+                int bytesRead = 0;
+                const int MAX_INSTRUCTIONS = 5000;
+
+                var output = new StringBuilder();
+
+                while (instructionCount < MAX_INSTRUCTIONS && bytesRead < byteCount)
+                {
+                    string label = GetLabel(address);
+                    if (!string.IsNullOrEmpty(label))
+                    {
+                        output.AppendLine();
+                        output.AppendLine($"{label}:");
+                    }
+
+                    var disasm = new Bridge.BASIC_INSTRUCTION_INFO();
+                    Bridge.DbgDisasmFastAt(address, ref disasm);
+
+                    if (disasm.size == 0)
+                    {
+                        address += 1;
+                        bytesRead += 1;
+                        continue;
+                    }
+
+                    // Attempt string dereference
+                    string inlineString = null;
+                    nuint ptr = disasm.type == 1 ? disasm.value.value :
+                                disasm.type == 2 ? disasm.addr : 0;
+
+                    if (ptr != 0)
+                    {
+                        try
+                        {
+                            var strData = ReadMemory(ptr, 64);
+                            int len = Array.IndexOf(strData, (byte)0);
+                            if (len > 0)
+                            {
+                                var decoded = Encoding.ASCII.GetString(strData, 0, len);
+                                if (decoded.All(c => c >= 0x20 && c < 0x7F))
+                                {
+                                    inlineString = decoded;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // ignore bad memory access
+                        }
+                    }
+
+                    string bytes = BitConverter.ToString(ReadMemory(address, (uint)disasm.size));
+                    output.Append($"{address.ToPtrString()}  {bytes,-20}  {disasm.instruction}");
+                    if (inlineString != null)
+                        output.Append($"    ; \"{inlineString}\"");
+                    output.AppendLine();
+
+                    address += (nuint)disasm.size;
+                    bytesRead += disasm.size;
+                    instructionCount++;
+                }
+
+                if (instructionCount >= MAX_INSTRUCTIONS)
+                    output.AppendLine($"; Max instruction limit ({MAX_INSTRUCTIONS}) reached");
+
+                if (bytesRead >= byteCount)
+                    output.AppendLine($"; Byte read limit ({byteCount}) reached");
+
+                return output.ToString();
+            }
+            catch (Exception ex)
+            {
+                return $"[GetDismAtAddress] Error: {ex.Message}";
+            }
+        }
+
+
+
+
+        [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true)]
+        public static void DumpModuleToFile(string[] pfilepath)
+        {
+            string filePath = pfilepath[0];//@"C:\dump.txt"; // Hardcoded file path as requested
+            Console.WriteLine($"Attempting to dump module info to: {filePath}");
+
+            try
+            {
+                // 1. Get current instruction pointer and module info
+                var cip = Bridge.DbgValFromString("cip"); // Gets EIP or RIP depending on architecture
+                var modInfo = new Module.ModuleInfo();
+
+                if (!Module.InfoFromAddr(cip, ref modInfo))
+                {
+                    Console.Error.WriteLine($"Error: Could not find module information for address {cip.ToPtrString()}. Is the debugger attached and running?");
+                    return;
+                }
+
+
+                var LoadedModules = GetAllModulesFromMemMapFunc();
+                Console.WriteLine("Modules loaded Count: " + LoadedModules.Count);
+                foreach (var (name, start, end) in LoadedModules)
+                {
+                    Console.WriteLine($"{name,-20} 0x{start:X} - 0x{end:X}");
+                }
+
+                IntPtr ptr = new IntPtr(0x14000140B); //Set to base address of module
+                nuint address = (nuint)ptr.ToInt64();
+                byte[] nops = Enumerable.Repeat((byte)0x90, 7).ToArray();
+
+                bool success = WriteMemory(address, nops);
+
+                if (success)
+                {
+                    Console.WriteLine($"Successfully patched {nops.Length} NOPs at 0x{address:X}");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to write memory at 0x{address:X}");
+                }
+
+
+                Console.WriteLine($"Found module '{modInfo.name}' at base {modInfo.@base.ToPtrString()}, size {modInfo.size:X}");
+
+                // Use StreamWriter to write to the file
+                using (var writer = new StreamWriter(filePath, false, Encoding.UTF8)) // Overwrite if exists
+                {
+                    // 2. Dump Registers
+                    writer.WriteLine("--- Current Register State ---");
+                    writer.WriteLine($"Module: {modInfo.name}");
+                    writer.WriteLine($"Timestamp: {DateTime.Now}");
+                    writer.WriteLine("-----------------------------");
+                    // Add common registers (adjust for x86/x64 as needed, DbgValFromString handles it)
+                    writer.WriteLine($"RAX: {Bridge.DbgValFromString("rax").ToPtrString()}");
+                    writer.WriteLine($"RBX: {Bridge.DbgValFromString("rbx").ToPtrString()}");
+                    writer.WriteLine($"RCX: {Bridge.DbgValFromString("rcx").ToPtrString()}");
+                    writer.WriteLine($"RDX: {Bridge.DbgValFromString("rdx").ToPtrString()}");
+                    writer.WriteLine($"RSI: {Bridge.DbgValFromString("rsi").ToPtrString()}");
+                    writer.WriteLine($"RDI: {Bridge.DbgValFromString("rdi").ToPtrString()}");
+                    writer.WriteLine($"RBP: {Bridge.DbgValFromString("rbp").ToPtrString()}");
+                    writer.WriteLine($"RSP: {Bridge.DbgValFromString("rsp").ToPtrString()}");
+                    writer.WriteLine($"RIP: {cip.ToPtrString()}"); // Use the 'cip' we already fetched
+                    writer.WriteLine($"R8:  {Bridge.DbgValFromString("r8").ToPtrString()}");
+                    writer.WriteLine($"R9:  {Bridge.DbgValFromString("r9").ToPtrString()}");
+                    writer.WriteLine($"R10: {Bridge.DbgValFromString("r10").ToPtrString()}");
+                    writer.WriteLine($"R11: {Bridge.DbgValFromString("r11").ToPtrString()}");
+                    writer.WriteLine($"R12: {Bridge.DbgValFromString("r12").ToPtrString()}");
+                    writer.WriteLine($"R13: {Bridge.DbgValFromString("r13").ToPtrString()}");
+                    writer.WriteLine($"R14: {Bridge.DbgValFromString("r14").ToPtrString()}");
+                    writer.WriteLine($"R15: {Bridge.DbgValFromString("r15").ToPtrString()}");
+                    writer.WriteLine($"EFlags: {Bridge.DbgValFromString("eflags").ToPtrString()}"); // Or rflags
+                    writer.WriteLine("-----------------------------");
+                    writer.WriteLine(); // Add a blank line
+
+                    // 3. Dump Disassembly and Labels
+                    writer.WriteLine($"--- Disassembly for {modInfo.name} ({modInfo.@base.ToPtrString()} - {(modInfo.@base + modInfo.size).ToPtrString()}) ---");
+                    writer.WriteLine("-----------------------------");
+
+
+
+                    nuint currentAddr = modInfo.@base;
+                    var endAddr = modInfo.@base + modInfo.size;
+                    const int MAX_INSTRUCTIONS = 10000; // Limit number of instructions to prevent too large dumps
+                    int instructionCount = 0;
+
+                    // Write disassembly with labels
+                    while (currentAddr < endAddr && instructionCount < MAX_INSTRUCTIONS)
+                    {
+
+                        // Get label at current address if exists
+                        string label = GetLabel(currentAddr);
+                        if (!string.IsNullOrEmpty(label))
+                        {
+                            writer.WriteLine();
+                            writer.WriteLine($"{label}:");
+                        }
+
+                        // Disassemble instruction at current address
+                        Bridge.BASIC_INSTRUCTION_INFO disasm = new Bridge.BASIC_INSTRUCTION_INFO();
+                        Bridge.DbgDisasmFastAt(currentAddr, ref disasm);
+                        if (disasm.size == 0)
+                        {
+                            // Failed to disassemble, move to next byte
+                            currentAddr++;
+                            continue;
+                        }
+
+                        //LabelMatchingInstruction(currentAddr, ref disasm);
+                        //LabelMatchingBytes(currentAddr, new byte[] { 0x48, 0x85, 0xc0}, "Found Bytes");
+
+                        // Attempt to dereference value or address for a potential string
+                        string inlineString = null;
+                        nuint possiblePtr = 0;
+
+                        if (disasm.type == 1) // value (immediate)
+                        {
+                            possiblePtr = disasm.value.value;
+                        }
+                        else if (disasm.type == 2) // address
+                        {
+                            possiblePtr = disasm.addr;
+                        }
+
+                        if (possiblePtr != 0)
+                        {
+                            try
+                            {
+                                var strData = ReadMemory(possiblePtr, 64);
+                                int len = Array.IndexOf(strData, (byte)0);
+                                if (len > 0)
+                                {
+                                    inlineString = Encoding.ASCII.GetString(strData, 0, len);
+
+                                    // Optional: filter printable ASCII
+                                    if (inlineString.All(c => c >= 0x20 && c < 0x7F))
+                                    {
+                                        writer.WriteLine($"    ; \"{inlineString}\"");
+                                    }
+                                    else
+                                    {
+                                        inlineString = null;
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // Ignore invalid memory
+                            }
+                        }
+
+
+                        // Format and write instruction
+                        string bytes = BitConverter.ToString(ReadMemory(currentAddr, (uint)disasm.size)); //.Replace("-", " ")
+                        writer.WriteLine($"{currentAddr.ToPtrString()}  {bytes,-20}  {disasm.instruction}");
+
+                        // Move to next instruction
+                        currentAddr += (nuint)disasm.size;
+                        instructionCount++;
+
+                        // If we've hit a lot of instructions for one section, add a progress note
+                        if (instructionCount % 1000 == 0)
+                        {
+                            //Console.WriteLine($"Dumped {instructionCount} instructions...");
+                        }
+                    }
+
+                    if (instructionCount >= MAX_INSTRUCTIONS)
+                    {
+                        writer.WriteLine();
+                        writer.WriteLine($"--- Instruction limit ({MAX_INSTRUCTIONS}) reached. Dump truncated. ---");
+                    }
+
+
+
+
+
+
+                    writer.WriteLine("-----------------------------");
+                    writer.WriteLine("--- Dump Complete ---");
+                } // StreamWriter is automatically flushed and closed here
+
+                Console.WriteLine($"Successfully dumped module '{modInfo.name}' and registers to {filePath}");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.Error.WriteLine($"Error: Access denied writing to '{filePath}'. Try running x64dbg as administrator or choose a different path. Details: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                Console.Error.WriteLine($"Error: An I/O error occurred while writing to '{filePath}'. Details: {ex.Message}");
+            }
+            catch (Exception ex) // Catch-all for other unexpected errors
+            {
+                Console.Error.WriteLine($"An unexpected error occurred: {ex.GetType().Name} - {ex.Message}");
+                Console.Error.WriteLine(ex.StackTrace); // Log stack trace for debugging
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

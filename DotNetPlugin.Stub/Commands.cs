@@ -16,6 +16,7 @@ namespace DotNetPlugin
         public string Name { get; }
 
         public bool DebugOnly { get; set; }
+        public bool MCPOnly { get; set; }
 
         public CommandAttribute() { }
 
@@ -57,6 +58,11 @@ namespace DotNetPlugin
             foreach (var (method, attribute) in methods)
             {
                 var name = attribute.Name ?? method.Name;
+
+                if (attribute.MCPOnly)
+                {
+                    continue; //Use only for MCPServer remote invokation
+                }
 
                 var reportsSuccess = method.ReturnType == typeof(bool);
                 if (!reportsSuccess && method.ReturnType != typeof(void))

@@ -55,6 +55,9 @@ namespace DotNetPlugin.NativeBindings.SDK
         public static extern bool DbgIsDebugging();
 
         [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]
+        public static extern bool DbgIsRunning();
+
+        [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]
         public static extern nuint DbgModBaseFromName([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
 
         [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]
@@ -122,6 +125,84 @@ namespace DotNetPlugin.NativeBindings.SDK
                 handle.Free();
             }
         }
+
+
+        [DllImport(dll, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        private static extern bool DbgMemWrite(nuint va, IntPtr src, nuint size);
+
+        public static unsafe bool DbgMemWrite<T>(nuint va, T[] buffer, nuint size) where T : unmanaged
+        {
+            if (buffer is null || size > (nuint)buffer.Length * (nuint)sizeof(T))
+                return false;
+
+            fixed (T* ptr = buffer)
+            {
+                return DbgMemWrite(va, (IntPtr)ptr, size);
+            }
+        }
+
+        public static unsafe bool DbgMemWrite<T>(nuint va, ref T src, nuint size) where T : struct
+        {
+            if (size > (nuint)Marshal.SizeOf<T>())
+                return false;
+
+            var handle = GCHandle.Alloc(src, GCHandleType.Pinned);
+            try
+            {
+                return DbgMemWrite(va, handle.AddrOfPinnedObject(), size);
+            }
+            finally
+            {
+                handle.Free();
+            }
+        }
+
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        public struct MEMMAPENTRY
+        {
+            public nuint addr;        // Start address of the memory region
+            public nuint size;        // Size of the region
+            public uint protection;   // Memory protection flags
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+            public string info;       // Type info (e.g., "Image", "Heap", etc.)
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string name;       // Module or section name
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MEMMAP
+        {
+            public uint count;                            // Number of entries
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
+            public MEMMAPENTRY[] page;                    // The memory pages
+        }
+
+        [DllImport(dll, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern bool DbgMemMap(ref MEMMAP memmap);
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct THREADENTRY
+        {
+            public uint ThreadId;
+            public nuint ThreadEntry; // Entry point address
+            public nuint StartAddress;
+            public nuint TebBase;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct THREADLIST
+        {
+            public int Count;
+
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+            public THREADENTRY[] Entries;
+        }
+
+        [DllImport(dll, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void DbgGetThreadList(ref THREADLIST list);
+
 
         [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]
         public static extern bool DbgXrefGet(nuint addr, ref XREF_INFO info);

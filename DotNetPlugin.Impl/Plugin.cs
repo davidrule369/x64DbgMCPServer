@@ -20,6 +20,7 @@ namespace DotNetPlugin
 
             LogInfo($"PluginHandle: {PluginHandle}");
 
+
             // You can listen to debugger events in two ways:
             // 1. by declaring dll exports in the Stub project (see PluginMain), then adding the corresponding methods to the IPlugin interface,
             //    finally implementing them as required to propagate the call to the Plugin class or
