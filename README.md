@@ -36,16 +36,18 @@ Connect to it with your prefered MCP Client on port 3001 via SSE.
 I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
 Once the MCP server is running (via the plugin menu in x64dbg), you can issue commands like:
 ```
-ExecuteDebuggerCommand command=init C:\PathTo\Binary.exe
-GetAllRegisters
-ReadMemAtAddress addressStr=0x000000014000153f, byteCount=5
-WriteMemToAddress addressStr=0x000000014000153f, byteString=90 90 90 90 90
+ExecuteDebuggerCommand command=init C:\InjectGetTickCount\InjectSpeed.exe
+ExecuteDebuggerCommand command="AddFavouriteCommand Log s, NameOfCmd"
+ReadDismAtAddress addressStr=0x000000014000153f, byteCount=5
+ReadMemAtAddress addressStr=00007FFA1AC81000, byteCount=5
+WriteMemToAddress addressStr=0x000000014000153f, byteString=90 90 90 90 90 90
 CommentOrLabelAtAddress addressStr=0x000000014000153f, value=Test, mode=Comment
-CommentOrLabelAtAddress addressStr=0x000000014000153f, value=        # removes comment
+CommentOrLabelAtAddress addressStr=0x000000014000153f, value=
+GetAllRegisters
 GetLabel addressStr=0x000000014000153f
 GetAllActiveThreads
-GetCallStack
 GetAllModulesFromMemMap
+GetCallStack
 These commands return JSON or text-formatted output that’s suitable for ingestion by AI models or integration scripts. Example:
 ```
 ![image](https://github.com/user-attachments/assets/f954feab-4518-4368-8b0a-d6ec07212122)
@@ -54,13 +56,6 @@ These commands return JSON or text-formatted output that’s suitable for ingest
 
 ## Actively working on implementing several functions
 Not every command is fully implemented althrough I am actively working on getting this project moving to support full stack, thread and module dumps for the AI to query.
-```
-[GetAllActiveThreads] Found 4 active threads:
-TID: 121428560 | EntryPoint: 0x0 | TEB: 0x0
-TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-```
 
 ## How It Works
 The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format back to a MCP client.
