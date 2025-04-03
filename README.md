@@ -19,6 +19,9 @@ Clone or fork the project: git clone <your-repo-url>
 Open the solution and customize the plugin name and output by editing Directory.Build.props
 
 The main logic resides in the DotNetPlugin.Impl project. Start by editing Plugin.cs — this is the entry point where plugin registration and MCP startup occurs.
+![image](https://github.com/user-attachments/assets/d307d3e0-4215-4fc4-a702-a9fd814703ac)
+![image](https://github.com/user-attachments/assets/02eb35d8-8584-46de-83c6-b535d23976b9)
+
 
 ## Features
 ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
@@ -36,8 +39,9 @@ The main logic resides in the DotNetPlugin.Impl project. Start by editing Plugin
 ✅ Expression function and menu extension support
 
 ## Sample Commands
+I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
 Once the MCP server is running (via the plugin menu in x64dbg), you can issue commands like:
-
+```
 ExecuteDebuggerCommand command=init C:\PathTo\Binary.exe
 GetAllRegisters
 ReadMemAtAddress addressStr=0x000000014000153f, byteCount=5
@@ -49,14 +53,19 @@ GetAllActiveThreads
 GetCallStack
 GetAllModulesFromMemMap
 These commands return JSON or text-formatted output that’s suitable for ingestion by AI models or integration scripts. Example:
+```
+![image](https://github.com/user-attachments/assets/f954feab-4518-4368-8b0a-d6ec07212122)
+![image](https://github.com/user-attachments/assets/2952e4eb-76ef-460c-9124-0e3c1167fa3d)
+
 
 ## Actively working on implementing several functions
+```
 [GetAllActiveThreads] Found 4 active threads:
 TID: 121428560 | EntryPoint: 0x0 | TEB: 0x0
 TID:        0 | EntryPoint: 0x0 | TEB: 0x0
 TID:        0 | EntryPoint: 0x0 | TEB: 0x0
 TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
+```
 
 ## How It Works
 The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format. Think of it as a bridge between web-friendly tools and native debugging environments.
