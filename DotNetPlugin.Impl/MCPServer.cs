@@ -4,10 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Web.Script.Serialization;
 
 namespace DotNetPlugin
@@ -99,20 +101,74 @@ namespace DotNetPlugin
             process.WaitForExit();
         }
 
+        private bool _isRunning = false;
+
         public void Start()
         {
-            _listener.Start();
-            Console.WriteLine("MCP server running CurrentlyDebugging:" + Bridge.DbgIsDebugging() + " IsRunning: " + Bridge.DbgIsRunning());
-            _listener.BeginGetContext(OnRequest, null);
+            if (_isRunning)
+            {
+                Console.WriteLine("MCP server is already running.");
+                return;
+            }
+
+            try
+            {
+                _listener.Start();
+                _listener.BeginGetContext(OnRequest, null);
+                _isRunning = true;
+                Console.WriteLine("MCP server started. CurrentlyDebugging: " + Bridge.DbgIsDebugging() + " IsRunning: " + Bridge.DbgIsRunning());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to start MCP server: " + ex.Message);
+            }
         }
+
         public void Stop()
         {
-            _listener.Stop();
-            Console.WriteLine("MCP server stoped");
-        }
-        
+            if (!_isRunning)
+            {
+                Console.WriteLine("MCP server is already stopped.");
+                _isRunning = false;
+                return;
+            }
 
-        private static readonly Dictionary<string, StreamWriter> _sseSessions = new Dictionary<string, StreamWriter>();
+            try
+            {
+                _listener.Stop();
+                _isRunning = false;
+                Console.WriteLine("MCP server stopped.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to stop MCP server: " + ex.Message);
+            }
+        }
+
+
+    public static void PrettyPrintJson(string json)
+    {
+        try
+        {
+            using JsonDocument doc = JsonDocument.Parse(json);
+            string prettyJson = JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            var compact = string.Join(Environment.NewLine,
+            prettyJson.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(line => line.TrimEnd()));
+
+            Console.WriteLine(compact.Replace("{", "").Replace("}", "").Replace("\r", ""));
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine("Invalid JSON: " + ex.Message);
+        }
+    }
+
+
+    private static readonly Dictionary<string, StreamWriter> _sseSessions = new Dictionary<string, StreamWriter>();
 
         private async void OnRequest(IAsyncResult ar) // Make async void for simplicity here, consider Task for robustness
         {
@@ -163,6 +219,11 @@ namespace DotNetPlugin
                         }
 
                         var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(jsonBody);
+
+                        if (!String.IsNullOrEmpty(jsonBody))
+                        {
+                            PrettyPrintJson(jsonBody);
+                        }
 
                         string method = json["method"]?.ToString();
                         var @params = json.ContainsKey("params") ? json["params"] as object[] : null;

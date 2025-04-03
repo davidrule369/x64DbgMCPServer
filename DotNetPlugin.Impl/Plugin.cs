@@ -39,6 +39,7 @@ namespace DotNetPlugin
         public override void Setup(ref Plugins.PLUG_SETUPSTRUCT setupStruct)
         {
             // Do additional UI setup (apart from menus) here.
+            Plugin.cbStartMCPServer(null);
         }
 
         public override Task<bool> StopAsync()
