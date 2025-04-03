@@ -54,13 +54,6 @@ These commands return JSON or text-formatted output that’s suitable for ingest
 
 ## Actively working on implementing several functions
 Not every command is fully implemented althrough I am actively working on getting this project moving to support full stack, thread and module dumps for the AI to query.
-```
-[GetAllActiveThreads] Found 4 active threads:
-TID: 121428560 | EntryPoint: 0x0 | TEB: 0x0
-TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-TID:        0 | EntryPoint: 0x0 | TEB: 0x0
-```
 
 ## How It Works
 The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format back to a MCP client.
