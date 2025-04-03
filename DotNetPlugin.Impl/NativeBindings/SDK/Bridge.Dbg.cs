@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace DotNetPlugin.NativeBindings.SDK
 {
@@ -96,6 +97,60 @@ namespace DotNetPlugin.NativeBindings.SDK
         [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]
         public static extern void DbgClearLabelRange(nuint start, nuint end);
 
+
+
+
+
+        [Flags]
+        public enum ADDRINFOFLAGS
+        {
+            flagmodule = 0x1,
+            flaglabel = 0x2,
+            flagcomment = 0x4,
+            flagbookmark = 0x8,
+            flagfunction = 0x10,
+            flagloop = 0x20,
+            flagargs = 0x40,
+            flagNoFuncOffset = 0x80
+        }
+
+        // Represents FUNCTION, LOOP, ARG structures (simplified)
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking)]
+        public struct FUNCTION_LOOP_INFO // Name adjusted for clarity
+        {
+            public nuint start;
+            public nuint end;
+            public nuint instrcount;
+            // Note: The C++ FUNCTION_LOOP_INFO might have other fields like 'manual', 'depth'
+            // which would need to be added here if flags indicate they are used/valid.
+            // For basic symbol lookup, these might not be essential.
+        }
+
+        // Struct to receive data from _dbg_addrinfoget, using StringBuilder for output strings
+        // In NativeMethods.cs
+
+        // Struct to pass to _dbg_addrinfoget, using IntPtr for output string buffers
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking, CharSet = CharSet.Ansi)]
+        public struct BRIDGE_ADDRINFO_NATIVE // Renamed for clarity
+        {
+            public ADDRINFOFLAGS flags; // Input: Flags indicating what info to retrieve
+            public IntPtr module;       // Output: Pointer to buffer for Module name (SizeConst=256)
+            public IntPtr label;        // Output: Pointer to buffer for Label name (SizeConst=256)
+            public IntPtr comment;      // Output: Pointer to buffer for Comment text (SizeConst=512)
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool isbookmark;           // Output: Bookmark status
+            public FUNCTION_LOOP_INFO function; // Output: Function info
+            public FUNCTION_LOOP_INFO loop;     // Output: Loop info
+            public FUNCTION_LOOP_INFO args;     // Output: Argument info
+        }
+
+        // Update the P/Invoke signature to use the new struct name
+        [DllImport("x64dbg.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "_dbg_addrinfoget", ExactSpelling = true, CharSet = CharSet.Ansi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool DbgAddrInfoGet(nuint addr, int segment, ref BRIDGE_ADDRINFO_NATIVE addrinfo); // Use new struct
+
+
+
         [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]
         private static extern bool DbgMemRead(nuint va, IntPtr dest, nuint size);
 
@@ -158,50 +213,111 @@ namespace DotNetPlugin.NativeBindings.SDK
         }
 
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct MEMMAPENTRY
+
+
+
+
+        public const uint MEM_IMAGE = 0x1000000; // Memory type constant
+        // Define MEMORY_BASIC_INFORMATION matching Windows API for the target platform
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking)]
+        public struct MEMORY_BASIC_INFORMATION
         {
-            public nuint addr;        // Start address of the memory region
-            public nuint size;        // Size of the region
-            public uint protection;   // Memory protection flags
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-            public string info;       // Type info (e.g., "Image", "Heap", etc.)
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string name;       // Module or section name
+            public IntPtr BaseAddress;
+            public IntPtr AllocationBase;
+            public uint AllocationProtect; // PROTECT_FLAGS enum
+#if AMD64 // PartitionId exists on 64-bit and >= Win8. Check if needed.
+            public ushort PartitionId;
+        // Packing might require explicit padding if PartitionId isn't always present or if alignment dictates
+        // public ushort ReservedPadding; // Example
+#endif
+            public nuint RegionSize;      // SIZE_T maps to nuint
+            public uint State;             // MEM_STATE enum (e.g., MEM_COMMIT)
+            public uint Protect;           // PROTECT_FLAGS enum (e.g., PAGE_EXECUTE_READ)
+            public uint Type;              // MEM_TYPE enum (e.g., MEM_IMAGE)
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MEMMAP
+        // Define MEMPAGE matching C++ struct
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking, CharSet = CharSet.Ansi)]
+        public struct MEMPAGE
         {
-            public uint count;                            // Number of entries
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
-            public MEMMAPENTRY[] page;                    // The memory pages
+            public MEMORY_BASIC_INFORMATION mbi;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] // MAX_MODULE_SIZE = 256
+            public string info; // This likely holds module path/name
         }
+
+        // Define MEMMAP_NATIVE matching C++ MEMMAP struct
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking)]
+        public struct MEMMAP_NATIVE
+        {
+            public int count;      // C++ uses int
+            public IntPtr page;    // C++ uses MEMPAGE* pointer
+        }
+
+        // --- P/Invoke Signatures ---
 
         [DllImport(dll, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern bool DbgMemMap(ref MEMMAP memmap);
+        public static extern bool DbgMemMap(ref MEMMAP_NATIVE memmap); // Use the native struct
 
+#if AMD64 // Define X64 symbol in your project properties for x64 builds
+        public const int NativePacking = 16;
+            public const bool Is64Bit = true;
+#else // Assuming x86 otherwise
+                public const int NativePacking = 8;
+                public const bool Is64Bit = false;
+#endif
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct THREADENTRY
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking, CharSet = CharSet.Ansi)]
+        public struct THREADINFO_NATIVE
         {
-            public uint ThreadId;
-            public nuint ThreadEntry; // Entry point address
-            public nuint StartAddress;
-            public nuint TebBase;
+            public int ThreadNumber;
+            public IntPtr Handle;       // HANDLE maps to IntPtr (matches target architecture size)
+            public uint ThreadId;       // DWORD maps to uint
+
+#if AMD64
+            public ulong ThreadStartAddress; // duint maps to ulong on x64
+        public ulong ThreadLocalBase;   // duint maps to ulong on x64
+#else
+            public uint ThreadStartAddress; // duint maps to uint on x86
+            public uint ThreadLocalBase;   // duint maps to uint on x86
+#endif
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] // MAX_THREAD_NAME_SIZE = 256
+            public string threadName;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct THREADLIST
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking)]
+        public struct THREADALLINFO
         {
-            public int Count;
+            public THREADINFO_NATIVE BasicInfo;
 
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
-            public THREADENTRY[] Entries;
+#if AMD64
+            public ulong ThreadCip;        // duint maps to ulong on x64
+#else
+            public uint ThreadCip;        // duint maps to uint on x86
+#endif
+
+            public uint SuspendCount;      // DWORD maps to uint
+            public int Priority;           // THREADPRIORITY likely maps to int
+            public int WaitReason;         // THREADWAITREASON likely maps to int - CORRECT ORDER
+            public uint LastError;         // DWORD maps to uint - CORRECT ORDER
+            public FILETIME UserTime;      // CORRECT ORDER
+            public FILETIME KernelTime;    // CORRECT ORDER
+            public FILETIME CreationTime;  // CORRECT ORDER
+            public ulong Cycles;           // ULONG64 maps to ulong (always 64-bit) - CORRECT ORDER
         }
+
+        [StructLayout(LayoutKind.Sequential, Pack = NativePacking)]
+        public struct THREADLIST_NATIVE
+        {
+            public int count;
+            public IntPtr list;            // Correct order: pointer first
+            public int CurrentThread;     // Correct order: index second
+        }
+
+        // --- P/Invoke Signatures ---
 
         [DllImport(dll, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        public static extern void DbgGetThreadList(ref THREADLIST list);
+        public static extern void DbgGetThreadList(ref THREADLIST_NATIVE list);
 
 
         [DllImport(dll, CallingConvention = cdecl, ExactSpelling = true)]

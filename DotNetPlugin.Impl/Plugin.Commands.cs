@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading;
@@ -732,12 +733,139 @@ namespace DotNetPlugin
             }
         }
 
+        // Function returns List of tuples: (Module Name, Full Path, Base Address, Total Size)
+        public static List<(string Name, string Path, nuint Base, nuint Size)> GetAllModulesFromMemMapFunc()
+        {
+            // Update the list's tuple definition to include Path (string)
+            var finalResult = new List<(string Name, string Path, nuint Base, nuint Size)>();
+            MEMMAP_NATIVE nativeMemMap = new MEMMAP_NATIVE();
+            var allocationRegions = new Dictionary<nuint, List<(nuint Base, nuint Size, string Info)>>();
+
+            try
+            {
+                if (!DbgMemMap(ref nativeMemMap))
+                {
+                    Console.WriteLine("[GetAllModulesFromMemMapFunc] DbgMemMap call failed.");
+                    return finalResult;
+                }
+
+                // Console.WriteLine($"[GetAllModulesFromMemMapFunc] DbgMemMap reported count: {nativeMemMap.count}"); // Optional
+
+                if (nativeMemMap.page != IntPtr.Zero && nativeMemMap.count > 0)
+                {
+                    int sizeOfMemPage = Marshal.SizeOf<MEMPAGE>();
+
+                    // --- Pass 1: Collect all MEM_IMAGE regions grouped by AllocationBase ---
+                    for (int i = 0; i < nativeMemMap.count; i++)
+                    {
+                        IntPtr currentPagePtr = new IntPtr(nativeMemMap.page.ToInt64() + (long)i * sizeOfMemPage);
+                        MEMPAGE memPage = Marshal.PtrToStructure<MEMPAGE>(currentPagePtr);
+
+                        if ((memPage.mbi.Type & MEM_IMAGE) == MEM_IMAGE)
+                        {
+                            nuint allocBase = (nuint)memPage.mbi.AllocationBase.ToInt64();
+                            nuint baseAddr = (nuint)memPage.mbi.BaseAddress.ToInt64();
+                            nuint regionSize = memPage.mbi.RegionSize;
+                            string infoString = memPage.info ?? string.Empty;
+
+                            if (!allocationRegions.ContainsKey(allocBase))
+                            {
+                                allocationRegions[allocBase] = new List<(nuint Base, nuint Size, string Info)>();
+                            }
+                            allocationRegions[allocBase].Add((baseAddr, regionSize, infoString));
+                        }
+                    }
+
+                    // --- Pass 2: Process collected regions for each allocation base ---
+                    foreach (var kvp in allocationRegions)
+                    {
+                        nuint allocBase = kvp.Key;
+                        var regions = kvp.Value;
+
+                        if (regions.Count > 0)
+                        {
+                            // Find the actual module name/path.
+                            string modulePath = "Unknown Module"; // Store the full path here
+                            var mainRegion = regions.FirstOrDefault(r => r.Base == allocBase);
+
+                            if (mainRegion.Info != null && !string.IsNullOrEmpty(mainRegion.Info))
+                            {
+                                modulePath = mainRegion.Info;
+                            }
+                            else
+                            {
+                                var firstInfoRegion = regions.FirstOrDefault(r => !string.IsNullOrEmpty(r.Info));
+                                if (firstInfoRegion.Info != null)
+                                {
+                                    modulePath = firstInfoRegion.Info;
+                                }
+                                // If still no path, it remains "Unknown Module"
+                            }
+
+                            // Extract the file name for display
+                            string finalModuleName = System.IO.Path.GetFileName(modulePath);
+                            if (string.IsNullOrEmpty(finalModuleName))
+                            {
+                                finalModuleName = modulePath; // Use path if filename extraction fails
+                                if (string.IsNullOrEmpty(finalModuleName)) // Final fallback
+                                {
+                                    finalModuleName = $"Module@0x{allocBase:X16}";
+                                    modulePath = finalModuleName; // Assign fallback to path too
+                                }
+                            }
+
+                            // --- Manual Min/Max Calculation ---
+                            nuint minRegionBase = regions[0].Base;
+                            nuint maxRegionEnd = regions[0].Base + regions[0].Size;
+                            for (int i = 1; i < regions.Count; i++)
+                            {
+                                if (regions[i].Base < minRegionBase) minRegionBase = regions[i].Base;
+                                nuint currentEnd = regions[i].Base + regions[i].Size;
+                                if (currentEnd > maxRegionEnd) maxRegionEnd = currentEnd;
+                            }
+                            // --- End Manual Min/Max ---
+
+                            nuint totalSize = maxRegionEnd - minRegionBase;
+
+                            // Add the aggregated module info, including the full path
+                            finalResult.Add((finalModuleName, modulePath, allocBase, totalSize));
+
+                        } // End if (regions.Count > 0)
+                    } // End Pass 2 Loop
+
+                    // Sort the final list by base address
+                    finalResult.Sort((a, b) => {
+                        if (a.Base < b.Base) return -1;
+                        if (a.Base > b.Base) return 1;
+                        return 0;
+                    });
+
+                }
+                // ... (rest of try block and error logging) ...
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GetAllModulesFromMemMapFunc] Exception: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+            finally
+            {
+                if (nativeMemMap.page != IntPtr.Zero)
+                {
+                    //BridgeFree(nativeMemMap.page); // Ensure this is called!
+                }
+            }
+            return finalResult;
+        }
+
+
         [Command("GetAllModulesFromMemMap", DebugOnly = true, MCPOnly = true)]
         public static string GetAllModulesFromMemMap()
         {
             try
             {
-                var modules = GetAllModulesFromMemMapFunc();
+                // Update expected tuple type
+                var modules = GetAllModulesFromMemMapFunc(); // Returns List<(string Name, string Path, nuint Base, nuint Size)>
 
                 if (modules.Count == 0)
                     return "[GetAllModulesFromMemMap] No image modules found in memory map.";
@@ -745,152 +873,392 @@ namespace DotNetPlugin
                 var output = new StringBuilder();
                 output.AppendLine($"[GetAllModulesFromMemMap] Found {modules.Count} image modules:");
 
-                foreach (var (Name, Base, End) in modules)
+                // Update foreach destructuring and output line
+                output.AppendLine($"{"Name",-30} {"Path",-70} {"Base Address",-18} {"End Address",-18} {"Size",-10}");
+                output.AppendLine(new string('-', 150)); // Separator line
+
+                foreach (var (Name, Path, Base, Size) in modules)
                 {
-                    output.AppendLine($"{Name,-30} 0x{Base:X16} - 0x{End:X16}");
+                    nuint End = Base + Size;
+                    // Add Path to the output, adjust spacing as needed
+                    output.AppendLine($"{Name,-30} {Path,-70} 0x{Base:X16} 0x{End:X16} 0x{Size:X}");
                 }
 
-                return output.ToString().TrimEnd(); // remove trailing newline
+                return output.ToString().TrimEnd();
             }
             catch (Exception ex)
             {
-                return $"[GetAllModulesFromMemMap] Error: {ex.Message}";
+                return $"[GetAllModulesFromMemMap] Error: {ex.Message}\n{ex.StackTrace}";
             }
         }
 
-        public static List<(string Name, nuint Base, nuint End)> GetAllModulesFromMemMapFunc()
+
+        // Define a struct to hold the frame info we can gather
+        public struct CallStackFrameInfo
         {
-            var result = new List<(string Name, nuint Base, nuint End)>();
-
-            MEMMAP memMap = new MEMMAP
-            {
-                page = new MEMMAPENTRY[128] // ensure array is allocated
-            };
-
-            if (!Bridge.DbgMemMap(ref memMap))
-            {
-                Console.WriteLine("Failed to retrieve memory map.");
-                return result;
-            }
-
-            Console.WriteLine("Memory map count: " + memMap.count);
-
-            int max = Math.Min(memMap.page.Length, (int)memMap.count);
-            for (int i = 0; i < max; i++)
-            {
-                var entry = memMap.page[i];
-
-                if (!string.IsNullOrEmpty(entry.info) && entry.info.Contains("Image"))
-                {
-                    nuint start = entry.addr;
-                    nuint end = start + entry.size;
-                    result.Add((entry.name, start, end));
-                }
-            }
-
-            return result;
+            public nuint FrameAddress; // Value of RBP for this frame
+            public nuint ReturnAddress; // Address execution returns to
+            public nuint FrameSize;     // Calculated size (approx)
         }
 
-        [Command("GetCallStack", DebugOnly = true, MCPOnly = true)]
-        public static string GetCallStack(int maxFrames = 32)
+        // Modified function to return richer frame info
+        public static List<CallStackFrameInfo> GetCallStackFunc(int maxFrames = 32)
         {
-            try
+            var callstack = new List<CallStackFrameInfo>();
+            byte[] addrBuffer = new byte[sizeof(ulong)]; // Buffer for reading addresses (nuint size)
+
+            // Get initial stack pointers from the debugger
+            // Ensure DbgValFromString is correctly implemented via P/Invoke
+            nuint rbp = DbgValFromString("rbp");
+            nuint rsp = DbgValFromString("rsp");
+            nuint currentRbp = rbp;
+            nuint previousRbp = 0; // To calculate frame size
+
+            if (rbp == 0 || rbp < rsp) // Initial check if RBP is valid
             {
-                var callstack = GetCallStackFunc(maxFrames);
-
-                if (callstack.Count == 0)
-                    return "[GetCallStack] No call stack could be retrieved.";
-
-                var output = new StringBuilder();
-                output.AppendLine($"[GetCallStack] Retrieved {callstack.Count} frames:");
-
-                for (int i = 0; i < callstack.Count; i++)
-                {
-                    output.AppendLine($"Frame {i,2}: 0x{callstack[i]:X}");
-                }
-
-                return output.ToString().TrimEnd(); // remove trailing newline
+                Console.WriteLine("[GetCallStackFunc] Initial RBP is invalid or below RSP.");
+                return callstack;
             }
-            catch (Exception ex)
-            {
-                return $"[GetCallStack] Error: {ex.Message}";
-            }
-        }
-
-        public static List<nuint> GetCallStackFunc(int maxFrames = 32)
-        {
-            List<nuint> callstack = new List<nuint>();
-
-            nuint rbp = Bridge.DbgValFromString("rbp");
-            nuint rsp = Bridge.DbgValFromString("rsp");
 
             for (int i = 0; i < maxFrames; i++)
             {
-                // Read return address (next value after saved RBP)
-                byte[] addrBuffer = new byte[8]; // 64-bit address
-                if (!Bridge.DbgMemRead(rbp + 8, addrBuffer, 8))
-                    break;
-
+                // 1. Read Return Address from [RBP + 8] (or [RBP + sizeof(nuint)])
+                if (!DbgMemRead(currentRbp + (nuint)sizeof(ulong), addrBuffer, (nuint)sizeof(ulong)))
+                {
+                    Console.WriteLine($"[GetCallStackFunc] Failed to read return address at 0x{currentRbp + (nuint)sizeof(ulong):X}");
+                    break; // Stop if memory read fails
+                }
                 nuint returnAddress = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
+
+                // Stop if return address is null (often end of chain)
                 if (returnAddress == 0)
+                {
+                    Console.WriteLine("[GetCallStackFunc] Reached null return address.");
                     break;
+                }
 
-                callstack.Add(returnAddress);
+                // 2. Read Saved RBP value from [RBP]
+                if (!DbgMemRead(currentRbp, addrBuffer, (nuint)sizeof(ulong)))
+                {
+                    Console.WriteLine($"[GetCallStackFunc] Failed to read saved RBP at 0x{currentRbp:X}");
+                    break; // Stop if memory read fails
+                }
+                nuint nextRbp = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
 
-                // Read the previous RBP
-                if (!Bridge.DbgMemRead(rbp, addrBuffer, 8))
-                    break;
+                // Calculate frame size (difference between current and previous RBP)
+                // Size is only meaningful after the first frame
+                nuint frameSize = (previousRbp > 0 && currentRbp > previousRbp) ? 0 : // Avoid nonsensical size if RBP decreased
+                                  (previousRbp > 0) ? previousRbp - currentRbp : 0;
 
-                rbp = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
-                if (rbp == 0 || rbp < rsp)
-                    break; // Invalid frame or stack unwound
+
+                // Add collected info for this frame
+                callstack.Add(new CallStackFrameInfo
+                {
+                    FrameAddress = currentRbp,
+                    ReturnAddress = returnAddress,
+                    FrameSize = frameSize
+                });
+
+                // Update RBP for the next iteration
+                previousRbp = currentRbp; // Store current RBP before updating
+                currentRbp = nextRbp;
+
+                // Validate the next RBP value
+                if (currentRbp == 0 || currentRbp < rsp || currentRbp <= previousRbp) // RBP must be > RSP and generally increase (move down stack)
+                {
+                    Console.WriteLine($"[GetCallStackFunc] Invalid next RBP (0x{currentRbp:X}). Previous=0x{previousRbp:X}, RSP=0x{rsp:X}. Stopping walk.");
+                    break; // Stop if RBP becomes null, goes below RSP, or doesn't advance
+                }
             }
 
             return callstack;
         }
+
+
+        [Command("GetCallStack", DebugOnly = true, MCPOnly = true)]
+        public static string GetCallStack(int maxFrames = 32)
+        {
+            // Define buffer sizes matching C++ MAX_ defines
+            const int MAX_MODULE_SIZE_BUFF = 256;
+            const int MAX_LABEL_SIZE_BUFF = 256;
+            const int MAX_COMMENT_SIZE_BUFF = 512;
+
+            try
+            {
+                var callstackFrames = GetCallStackFunc(maxFrames); // This still returns List<CallStackFrameInfo>
+
+                if (callstackFrames.Count == 0)
+                    return "[GetCallStack] Call stack could not be retrieved (check RBP validity or use debugger UI).";
+
+                var output = new StringBuilder();
+                output.AppendLine($"[GetCallStack] Retrieved {callstackFrames.Count} frames (RBP walk, may be inaccurate):");
+                output.AppendLine($"{"Frame",-5} {"Frame Addr",-18} {"Return Addr",-18} {"Size",-10} {"Module",-25} {"Label/Symbol",-40} {"Comment"}");
+                output.AppendLine(new string('-', 130));
+
+                // Allocate native buffers ONCE outside the loop if possible,
+                // but since they are modified by the native call, it might be safer
+                // to allocate/free them inside the loop if issues arise.
+                // Let's try allocating inside for safety with ref struct modification.
+
+                for (int i = 0; i < callstackFrames.Count; i++)
+                {
+                    var frame = callstackFrames[i];
+                    string moduleStr = "N/A";
+                    string labelStr = "N/A";
+                    string commentStr = "";
+
+                    // --- Manual Marshalling Setup ---
+                    IntPtr ptrModule = IntPtr.Zero;
+                    IntPtr ptrLabel = IntPtr.Zero;
+                    IntPtr ptrComment = IntPtr.Zero;
+                    BRIDGE_ADDRINFO_NATIVE addrInfo = new BRIDGE_ADDRINFO_NATIVE(); // Must be NATIVE struct
+
+                    try // Use try/finally to guarantee freeing allocated memory
+                    {
+                        // 1. Allocate native buffers
+                        ptrModule = Marshal.AllocHGlobal(MAX_MODULE_SIZE_BUFF);
+                        ptrLabel = Marshal.AllocHGlobal(MAX_LABEL_SIZE_BUFF);
+                        ptrComment = Marshal.AllocHGlobal(MAX_COMMENT_SIZE_BUFF);
+
+                        // Initialize buffers slightly for safety (optional, helps debugging)
+                        Marshal.WriteByte(ptrModule, 0, 0);
+                        Marshal.WriteByte(ptrLabel, 0, 0);
+                        Marshal.WriteByte(ptrComment, 0, 0);
+
+                        // 2. Prepare the struct
+                        addrInfo.module = ptrModule;
+                        addrInfo.label = ptrLabel;
+                        addrInfo.comment = ptrComment;
+                        // Set flags for desired info
+                        addrInfo.flags = ADDRINFOFLAGS.flagmodule | ADDRINFOFLAGS.flaglabel | ADDRINFOFLAGS.flagcomment;
+
+                        // 3. Call the native function (use correct struct type)
+                        bool success = DbgAddrInfoGet(frame.ReturnAddress, 0, ref addrInfo); // Pass NATIVE struct
+
+                        // 4. Read results back from native buffers if call succeeded
+                        if (success)
+                        {
+                            moduleStr = Marshal.PtrToStringAnsi(addrInfo.module) ?? "N/A"; // Read from buffer
+                            labelStr = Marshal.PtrToStringAnsi(addrInfo.label) ?? "N/A";   // Read from buffer
+
+                            string retrievedComment = Marshal.PtrToStringAnsi(addrInfo.comment) ?? "";
+                            if (!string.IsNullOrEmpty(retrievedComment))
+                            {
+                                // Handle auto-comment marker (\1) if present
+                                if (retrievedComment.Length > 0 && retrievedComment[0] == '\x01')
+                                {
+                                    commentStr = retrievedComment.Length > 1 ? retrievedComment.Substring(1) : "";
+                                }
+                                else
+                                {
+                                    commentStr = retrievedComment;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Fallback if DbgAddrInfoGet fails
+                            var modInfoOnly = new BRIDGE_ADDRINFO_NATIVE { flags = ADDRINFOFLAGS.flagmodule, module = ptrModule };
+                            Marshal.WriteByte(ptrModule, 0, 0); // Clear buffer before reuse
+                            if (DbgAddrInfoGet(frame.ReturnAddress, 0, ref modInfoOnly))
+                            {
+                                moduleStr = Marshal.PtrToStringAnsi(modInfoOnly.module) ?? "Lookup Failed";
+                            }
+                            else
+                            {
+                                moduleStr = "Lookup Failed";
+                            }
+                            labelStr = ""; // Clear label/comment if lookup failed
+                            commentStr = "";
+                        }
+                    }
+                    finally // 5. CRITICAL: Free allocated native memory
+                    {
+                        if (ptrModule != IntPtr.Zero) Marshal.FreeHGlobal(ptrModule);
+                        if (ptrLabel != IntPtr.Zero) Marshal.FreeHGlobal(ptrLabel);
+                        if (ptrComment != IntPtr.Zero) Marshal.FreeHGlobal(ptrComment);
+                    }
+                    // --- End Manual Marshalling ---
+
+
+                    // Format the output line
+                    output.AppendLine($"{$"[{i}]",-5} 0x{frame.FrameAddress:X16} 0x{frame.ReturnAddress:X16} {($"0x{frame.FrameSize:X}"),-10} {moduleStr,-25} {labelStr,-40} {commentStr}");
+                } // End for loop
+
+                return output.ToString().TrimEnd(); // remove trailing newline
+            }
+            catch (Exception ex)
+            {
+                return $"[GetCallStack] Error: {ex.Message}\n{ex.StackTrace}";
+            }
+        }
+
+        // GetCallStackFunc remains the same as the previous version, returning List<CallStackFrameInfo>
+        // public static List<CallStackFrameInfo> GetCallStackFunc(int maxFrames = 32) { ... }
+
+
+        //[Command("GetCallStack", DebugOnly = true, MCPOnly = true)]
+        //public static string GetCallStack(int maxFrames = 32)
+        //{
+        //    try
+        //    {
+        //        var callstack = GetCallStackFunc(maxFrames);
+
+        //        if (callstack.Count == 0)
+        //            return "[GetCallStack] No call stack could be retrieved.";
+
+        //        var output = new StringBuilder();
+        //        output.AppendLine($"[GetCallStack] Retrieved {callstack.Count} frames:");
+
+        //        for (int i = 0; i < callstack.Count; i++)
+        //        {
+        //            output.AppendLine($"Frame {i,2}: 0x{callstack[i]:X}");
+        //        }
+
+        //        return output.ToString().TrimEnd(); // remove trailing newline
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return $"[GetCallStack] Error: {ex.Message}";
+        //    }
+        //}
+
+        //public static List<nuint> GetCallStackFunc(int maxFrames = 32)
+        //{
+        //    List<nuint> callstack = new List<nuint>();
+
+        //    nuint rbp = Bridge.DbgValFromString("rbp");
+        //    nuint rsp = Bridge.DbgValFromString("rsp");
+
+        //    for (int i = 0; i < maxFrames; i++)
+        //    {
+        //        // Read return address (next value after saved RBP)
+        //        byte[] addrBuffer = new byte[8]; // 64-bit address
+        //        if (!Bridge.DbgMemRead(rbp + 8, addrBuffer, 8))
+        //            break;
+
+        //        nuint returnAddress = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
+        //        if (returnAddress == 0)
+        //            break;
+
+        //        callstack.Add(returnAddress);
+
+        //        // Read the previous RBP
+        //        if (!Bridge.DbgMemRead(rbp, addrBuffer, 8))
+        //            break;
+
+        //        rbp = (nuint)BitConverter.ToUInt64(addrBuffer, 0);
+        //        if (rbp == 0 || rbp < rsp)
+        //            break; // Invalid frame or stack unwound
+        //    }
+
+        //    return callstack;
+        //}
 
         [Command("GetAllActiveThreads", DebugOnly = true, MCPOnly = true)]
         public static string GetAllActiveThreads()
         {
             try
             {
-                var threads = GetAllActiveThreadsFunc();
+                // Get the list of threads with the extended information
+                var threads = GetAllActiveThreadsFunc(); // This now returns List<(int, uint, ulong, ulong, string)>
                 var output = new StringBuilder();
 
                 output.AppendLine($"[GetAllActiveThreads] Found {threads.Count} active threads:");
 
-                foreach (var (ThreadId, EntryPoint, TEB) in threads)
+                // Update the foreach loop to destructure the new tuple elements
+                foreach (var (ThreadNumber, ThreadId, EntryPoint, TEB, ThreadName) in threads)
                 {
-                    output.AppendLine($"TID: {ThreadId,6} | EntryPoint: 0x{EntryPoint:X} | TEB: 0x{TEB:X}");
+                    // Update the output line to include ThreadNumber and ThreadName
+                    // Adjust formatting as desired
+                    output.AppendLine($"Num: {ThreadNumber,3} | TID: {ThreadId,6} | EntryPoint: 0x{EntryPoint:X16} | TEB: 0x{TEB:X16} | Name: {ThreadName}");
                 }
 
                 return output.ToString().TrimEnd(); // Removes trailing newline
             }
             catch (Exception ex)
             {
-                return $"[GetAllActiveThreads] Error: {ex.Message}";
+                // Add more detail to the error if possible
+                return $"[GetAllActiveThreads] Error: {ex.Message}\n{ex.StackTrace}";
             }
         }
 
-        public static List<(uint ThreadId, nuint EntryPoint, nuint TEB)> GetAllActiveThreadsFunc()
+        // Updated function signature and List type to include ThreadNumber and ThreadName
+        public static List<(int ThreadNumber, uint ThreadId, ulong EntryPoint, ulong TEB, string ThreadName)> GetAllActiveThreadsFunc()
         {
-            var result = new List<(uint, nuint, nuint)>();
+            // Update the list's tuple definition
+            var result = new List<(int ThreadNumber, uint ThreadId, ulong EntryPoint, ulong TEB, string ThreadName)>();
+            THREADLIST_NATIVE nativeList = new THREADLIST_NATIVE();
 
-            THREADLIST threadList = new THREADLIST
+            try
             {
-                Entries = new THREADENTRY[256]
-            };
+                DbgGetThreadList(ref nativeList);
 
-            DbgGetThreadList(ref threadList);
+                if (nativeList.list != IntPtr.Zero && nativeList.count > 0)
+                {
+                    int sizeOfAllInfo = Marshal.SizeOf<THREADALLINFO>();
+                    // Console.WriteLine($"DEBUG: Marshal.SizeOf<THREADALLINFO>() = {sizeOfAllInfo}"); // Keep for debugging
 
-            for (int i = 0; i < threadList.Count; i++)
+                    for (int i = 0; i < nativeList.count; i++)
+                    {
+                        IntPtr currentPtr = new IntPtr(nativeList.list.ToInt64() + (long)i * sizeOfAllInfo);
+                        THREADALLINFO threadInfo = Marshal.PtrToStructure<THREADALLINFO>(currentPtr);
+
+                        // Add the extended information to the result list
+                        // This now matches the List's tuple definition
+                        result.Add((
+                            threadInfo.BasicInfo.ThreadNumber,
+                            threadInfo.BasicInfo.ThreadId,
+                            threadInfo.BasicInfo.ThreadStartAddress, // ulong
+                            threadInfo.BasicInfo.ThreadLocalBase,    // ulong
+                            threadInfo.BasicInfo.threadName          // string
+                        ));
+                    }
+                }
+                else if (nativeList.list == IntPtr.Zero && nativeList.count > 0)
+                {
+                    // Handle potential error case where count > 0 but list pointer is null
+                    Console.WriteLine($"[GetAllActiveThreadsFunc] Warning: nativeList.count is {nativeList.count} but nativeList.list is IntPtr.Zero.");
+                }
+            }
+            catch (Exception ex)
             {
-                var t = threadList.Entries[i];
-                result.Add((t.ThreadId, t.ThreadEntry, t.TebBase));
+                // Log or handle exceptions during marshalling/processing
+                Console.WriteLine($"[GetAllActiveThreadsFunc] Exception during processing: {ex.Message}\n{ex.StackTrace}");
+                // Optionally re-throw or return partial results depending on desired behavior
+                throw; // Re-throwing is often appropriate unless you want to suppress errors
+            }
+            finally
+            {
+                if (nativeList.list != IntPtr.Zero)
+                {
+                    // Console.WriteLine($"DEBUG: Calling BridgeFree for IntPtr {nativeList.list}"); // Add debug log
+                    //BridgeFree(nativeList.list); // Free the allocated memory - UNCOMMENT THIS!
+                }
             }
 
             return result;
         }
+
+        //public static List<(uint ThreadId, nuint EntryPoint, nuint TEB)> GetAllActiveThreadsFunc()
+        //{
+        //    var result = new List<(uint, nuint, nuint)>();
+
+        //    THREADLIST threadList = new THREADLIST
+        //    {
+        //        Entries = new THREADENTRY[256]
+        //    };
+
+        //    DbgGetThreadList(ref threadList);
+
+        //    for (int i = 0; i < threadList.Count; i++)
+        //    {
+        //        var t = threadList.Entries[i];
+        //        result.Add((t.ThreadId, t.ThreadEntry, t.TebBase));
+        //    }
+
+        //    return result;
+        //}
 
 
 
@@ -925,8 +1293,8 @@ namespace DotNetPlugin
         }
 
 
-        [Command("ReadMemAtAddress", DebugOnly = true, MCPOnly = true)]
-        public static string ReadMemAtAddress(string addressStr, int byteCount)
+        [Command("ReadDismAtAddress", DebugOnly = true, MCPOnly = true)]
+        public static string ReadDismAtAddress(string addressStr, int byteCount)
         {
             try
             {
@@ -1036,9 +1404,17 @@ namespace DotNetPlugin
 
                 var LoadedModules = GetAllModulesFromMemMapFunc();
                 Console.WriteLine("Modules loaded Count: " + LoadedModules.Count);
-                foreach (var (name, start, end) in LoadedModules)
+
+                // Deconstruct into FOUR variables matching the tuple returned by the function
+                foreach (var (name, path, baseAddr, size) in LoadedModules)
                 {
-                    Console.WriteLine($"{name,-20} 0x{start:X} - 0x{end:X}");
+                    // Calculate the end address correctly using baseAddr + size
+                    nuint endAddr = baseAddr + size;
+                    // Use the correct variables in the output string
+                    // Added Path for context, and corrected End address calculation
+                    Console.WriteLine($"{name,-30} Path: {path,-70} Base: 0x{baseAddr:X16} End: 0x{endAddr:X16} Size: 0x{size:X}");
+                    // Or, if you only wanted the original 3 pieces of info (adjusting end calculation):
+                    // Console.WriteLine($"{name,-20} 0x{baseAddr:X16} - 0x{endAddr:X16}");
                 }
 
                 IntPtr ptr = new IntPtr(0x14000140B); //Set to base address of module
