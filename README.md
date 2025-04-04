@@ -64,6 +64,9 @@ Not every command is fully implemented althrough I am actively working on gettin
 ## How It Works
 The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format back to a MCP client.
 
+## Known Issues
+ExecuteDebuggerCommand always returns true as it pertains to the comment successfully being execute and not the results of the actual command.
+
 ## Special thanks
 ⚡ With the help of DotNetPluginCS by Adams85. That and roughly ~20 hours of focused coding, MCP Protocol review resulted in a decent proof-of-concept self-contained HTTP MCP server plugin for x64dbg.
 
