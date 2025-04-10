@@ -122,6 +122,197 @@
     <value>..\resources\abouticon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="DebugControl" xml:space="preserve">
+    <value>Debugger Command Help Manual
+InitDebug
+
+ExecuteDebuggerCommand command = InitDebug executable_path [command_line] [current_folder]
+[string]executable_path = Path to the executable file to debug. If a full path is not provided, the current directory is used. Enclose paths with spaces in quotation marks.
+[optional string]command_line = Command line arguments to pass to the process.
+[optional string]current_folder = Working directory for the process.
+Description: Initializes the debugger by loading the specified executable, performing basic checks, setting breakpoints on TLS callbacks (if present), and at the process entry point. It breaks at the system breakpoint before returning control to the user. Aliases: initdbg, init.
+Result: Sets the process ID ($pid) and process handle ($hp, $hProcess) variables.
+Example:
+ExecuteDebuggerCommand command = "InitDebug C:\Program Files\MyApp\MyApp.exe"
+ExecuteDebuggerCommand command = "init notepad.exe,C:\MyLog.txt,C:\Temp"
+
+StopDebug
+ExecuteDebuggerCommand command = StopDebug
+Description: Stops the current debugging session and detaches from the debuggee. Aliases: stop, dbgstop.
+Result: Clears the process ID ($pid) and process handle ($hp, $hProcess) variables.
+Example:
+ExecuteDebuggerCommand command = "stop"
+
+AttachDebugger
+ExecuteDebuggerCommand command = AttachDebugger pid [event_handle] [tid]
+[integer]pid = Process Identifier (PID) of the running process.
+[optional handle]event_handle = Handle to an event object to signal (for internal use).
+[optional integer]tid = Thread Identifier (TID) of the thread to resume after attaching (for internal use).
+Description: Attaches the debugger to a running process. Alias: attach.
+Result: Sets the process ID ($pid) and process handle ($hp, $hProcess) variables.
+Example:
+ExecuteDebuggerCommand command = "attach 1234"
+
+DetachDebugger
+ExecuteDebuggerCommand command = DetachDebugger
+Description: Detaches the debugger from the debuggee, allowing it to continue running independently. Alias: detach.
+Result: Clears the process ID ($pid) and process handle ($hp, $hProcess) variables.
+Example:
+ExecuteDebuggerCommand command = "detach"
+
+run
+ExecuteDebuggerCommand command = run
+Description: Resumes execution of the debuggee from the current position. Aliases: go, r, g.
+Example:
+ExecuteDebuggerCommand command = "go"
+
+erun
+ExecuteDebuggerCommand command = erun
+Description: Resumes execution of the debuggee and ignores any exceptions that occur. Aliases: ego, er, eg.
+Example:
+ExecuteDebuggerCommand command = "erun"
+
+serun
+ExecuteDebuggerCommand command = serun
+Description: Resumes execution of the debuggee, ignoring the current exception and any new exceptions that occur. Aliases: sego.
+Example:
+ExecuteDebuggerCommand command = "sego"
+
+pause
+ExecuteDebuggerCommand command = pause
+Description: Pauses the execution of the debuggee.
+Example:
+ExecuteDebuggerCommand command = "pause"
+
+DebugContinue
+ExecuteDebuggerCommand command = DebugContinue
+Description: Continues execution of the debuggee after handling an exception. Alias: con.
+Example:
+ExecuteDebuggerCommand command = "con"
+
+StepInto
+ExecuteDebuggerCommand command = StepInto
+Description: Executes the next instruction, stepping into function calls. Alias: sti.
+Example:
+ExecuteDebuggerCommand command = "sti"
+
+eStepInto
+ExecuteDebuggerCommand command = eStepInto
+Description: Executes the next instruction, stepping into function calls, and ignores any exceptions. Alias: esti.
+Example:
+ExecuteDebuggerCommand command = "esti"
+
+seStepInto
+ExecuteDebuggerCommand command = seStepInto
+Description: Executes the next instruction, stepping into function calls, and ignores the current and any new exceptions. Alias: sesti.
+Example:
+ExecuteDebuggerCommand command = "sesti"
+
+StepOver
+ExecuteDebuggerCommand command = StepOver
+Description: Executes the next instruction, stepping over function calls. Aliases: step, sto, st.
+Example:
+ExecuteDebuggerCommand command = "step"
+
+eStepOver
+ExecuteDebuggerCommand command = eStepOver
+Description: Executes the next instruction, stepping over function calls, and ignores any exceptions. Aliases: estep, esto, est.
+Example:
+ExecuteDebuggerCommand command = "estep"
+
+seStepOver
+ExecuteDebuggerCommand command = seStepOver
+Description: Executes the next instruction, stepping over function calls, and ignores the current and any new exceptions. Aliases: sestep, sesto, sest.
+Example:
+ExecuteDebuggerCommand command = "sestep"
+
+StepOut
+ExecuteDebuggerCommand command = StepOut
+Description: Runs until the current function returns. Alias: rtr.
+Example:
+ExecuteDebuggerCommand command = "rtr"
+
+eStepOut
+ExecuteDebuggerCommand command = eStepOut
+Description: Runs until the current function returns, ignoring any exceptions. Alias: ertr.
+Example:
+ExecuteDebuggerCommand command = "ertr"
+
+skip
+ExecuteDebuggerCommand command = skip [count]
+[optional integer]count = Number of instructions to skip. Defaults to 1 if not specified.
+Description: Skips the next instruction, swallowing the current exception if present. Useful for continuing after an INT3 instruction.
+Example:
+ExecuteDebuggerCommand command = "skip"
+ExecuteDebuggerCommand command = "skip 3"
+
+InstrUndo
+ExecuteDebuggerCommand command = InstrUndo
+Description: Undoes the last instruction executed.
+Example:
+ExecuteDebuggerCommand command = "InstrUndo"
+
+StepUser
+ExecuteDebuggerCommand command = StepUser
+Description: Steps into user code, skipping system and library calls. Alias: StepUserInto.
+Example:
+ExecuteDebuggerCommand command = "StepUser"
+
+StepSystem
+ExecuteDebuggerCommand command = StepSystem
+Description: Steps into system code, used when skipping over user-mode instructions is desired. Alias: StepSystemInto.
+Example:
+ExecuteDebuggerCommand command = "StepSystem"
+
+DebugBreak
+ExecuteDebuggerCommand command = DebugBreak
+Description: Inserts a software breakpoint at the current instruction pointer. Execution will break when this point is reached again. Alias: int3.
+Example:
+ExecuteDebuggerCommand command = "int3"
+
+StopTracking
+ExecuteDebuggerCommand command = StopTracking
+Description: Stops instruction tracking and clears the instruction history buffer.
+Example:
+ExecuteDebuggerCommand command = "StopTracking"
+
+TraceInto
+ExecuteDebuggerCommand command = TraceInto
+Description: Begins tracing into instructions until a return is hit or user interrupts it. Alias: ti.
+Example:
+ExecuteDebuggerCommand command = "ti"
+
+TraceOver
+ExecuteDebuggerCommand command = TraceOver
+Description: Begins tracing over function calls instead of stepping into them. Alias: to.
+Example:
+ExecuteDebuggerCommand command = "to"
+
+RunTo
+ExecuteDebuggerCommand command = RunTo address
+[integer or label]address = The address or label to run to.
+Description: Runs execution until the specified address is reached. Alias: rt.
+Example:
+ExecuteDebuggerCommand command = "RunTo 0x00401050"
+ExecuteDebuggerCommand command = "rt MyLabel"
+
+SetEntryBreak
+ExecuteDebuggerCommand command = SetEntryBreak enable
+[boolean]enable = Set to 1 to enable, 0 to disable the entry point breakpoint.
+Description: Enables or disables a breakpoint at the program entry point.
+Example:
+ExecuteDebuggerCommand command = "SetEntryBreak 1"
+ExecuteDebuggerCommand command = "SetEntryBreak 0"
+
+SetTlsBreak
+ExecuteDebuggerCommand command = SetTlsBreak enable
+[boolean]enable = Set to 1 to enable, 0 to disable TLS callback breakpoints.
+Description: Enables or disables breakpoints on TLS callback functions.
+Example:
+ExecuteDebuggerCommand command = "SetTlsBreak 1"
+ExecuteDebuggerCommand command = "SetTlsBreak 0"
+</value>
+  </data>
+  <data name="DebugControlJSON" xml:space="preserve">
     <value>[
   {
     "command": "InitDebug",
@@ -397,6 +588,140 @@
 </value>
   </data>
   <data name="GUI" xml:space="preserve">
+    <value>disasm
+ExecuteDebuggerCommand command = disasm address
+[integer]address = The memory address to display in the disassembly view.
+Description: Opens the disassembly view at the specified address. Aliases: dis, d.
+Example:
+ExecuteDebuggerCommand command = "dis 0x00401000"
+ExecuteDebuggerCommand command = "d MyFunctionEntry"
+
+dump
+ExecuteDebuggerCommand command = dump address
+[integer]address = The memory address to display in the dump view.
+Description: Opens the dump view at the specified address.
+Example:
+ExecuteDebuggerCommand command = "dump 0x7FFE0030"
+ExecuteDebuggerCommand command = "dump $csp+10"
+
+sdump
+ExecuteDebuggerCommand command = sdump address
+[integer]address = The memory address to display in the stack dump view.
+Description: Opens the stack dump view at the specified address.
+Example:
+ExecuteDebuggerCommand command = "sdump $csp"
+
+memmapdump
+ExecuteDebuggerCommand command = memmapdump
+Description: Displays the memory map in the dump view.
+Example:
+ExecuteDebuggerCommand command = "memmapdump"
+
+graph
+ExecuteDebuggerCommand command = graph address
+[integer]address = The memory address to display in the graph view.
+Description: Opens the graph view at the specified address.
+Example:
+ExecuteDebuggerCommand command = "graph 0x00401000"
+
+guiupdateenable
+ExecuteDebuggerCommand command = guiupdateenable
+Description: Enables GUI updates.
+Example:
+ExecuteDebuggerCommand command = "guiupdateenable"
+
+guiupdatedisable
+ExecuteDebuggerCommand command = guiupdatedisable
+Description: Disables GUI updates.
+Example:
+ExecuteDebuggerCommand command = "guiupdatedisable"
+
+setfreezestack
+ExecuteDebuggerCommand command = setfreezestack freeze
+[boolean]freeze = Set to true to freeze the stack view, false to unfreeze.
+Description: Sets whether the stack view should be frozen.
+Example:
+ExecuteDebuggerCommand command = "setfreezestack true"
+ExecuteDebuggerCommand command = "setfreezestack false"
+
+refinit
+ExecuteDebuggerCommand command = refinit
+Description: Initializes the reference view.
+Example:
+ExecuteDebuggerCommand command = "refinit"
+refadd
+
+ExecuteDebuggerCommand command = refadd address type text
+[integer]address = The memory address of the reference.
+[string]type = The type of reference.
+[string]text = The text description of the reference.
+Description: Adds a reference to the reference view.
+Example:
+ExecuteDebuggerCommand command = "refadd 0x00405010,Data Reference,Pointer to user settings"
+
+refget
+ExecuteDebuggerCommand command = refget index
+[integer]index = The index of the reference to retrieve.
+Description: Retrieves a reference from the reference view.
+Result: The retrieved reference object.
+Example:
+ExecuteDebuggerCommand command = "refget 5"
+
+EnableLog
+ExecuteDebuggerCommand command = EnableLog
+Description: Enables logging in the log view. Aliases: LogEnable.
+Example:
+ExecuteDebuggerCommand command = "EnableLog"
+
+DisableLog
+ExecuteDebuggerCommand command = DisableLog
+Description: Disables logging in the log view. Aliases: LogDisable.
+Example:
+ExecuteDebuggerCommand command = "DisableLog"
+
+ClearLog
+ExecuteDebuggerCommand command = ClearLog
+Description: Clears the log view. Aliases: cls, lc, lclr.
+Example:
+ExecuteDebuggerCommand command = "cls"
+
+AddFavouriteTool
+ExecuteDebuggerCommand command = AddFavouriteTool name path [arguments]
+[string]name = The name of the tool.
+[string]path = The path to the tool executable. Use double backslashes (\\) for paths.
+[optional string]arguments = The arguments to pass to the tool.
+Description: Adds a tool to the favourites menu.
+Example:
+ExecuteDebuggerCommand command = "AddFavouriteTool HxD Hex Editor, C:\Program Files\HxD\HxD.exe"
+ExecuteDebuggerCommand command = "AddFavouriteTool ProcMon C:\Sysinternals\Procmon.exe /accepteula"
+
+AddFavouriteCommand
+ExecuteDebuggerCommand command = AddFavouriteCommand name command
+[string]name = The name of the command.
+[string]command = The command string to execute.
+Description: Adds a command to the favourites menu.
+Example:
+ExecuteDebuggerCommand command = "AddFavouriteCommand \"Show Modules\" memmapdump"
+ExecuteDebuggerCommand command = "AddFavouriteCommand \"Breakpoint List\" bplist"
+
+AddFavouriteToolShortcut
+ExecuteDebuggerCommand command = AddFavouriteToolShortcut name shortcut
+[string]name = The name of the favourite tool (must already exist via AddFavouriteTool).
+[string]shortcut = The shortcut key combination (e.g., "Ctrl+Alt+H").
+Description: Sets a shortcut for a favourite tool. Aliases: SetFavouriteToolShortcut.
+Example:
+ExecuteDebuggerCommand command = "AddFavouriteToolShortcut,HxD Hex Editor,Ctrl+Shift+H"
+
+FoldDisassembly
+ExecuteDebuggerCommand command = FoldDisassembly address fold
+[integer]address = The address of the block to fold or unfold.
+[boolean]fold = Set to true to fold the block, false to unfold.
+Description: Folds or unfolds a block in the disassembly view.
+Example:
+ExecuteDebuggerCommand command = "FoldDisassembly 0x00401100 true"
+ExecuteDebuggerCommand command = "FoldDisassembly MyLoopStart false"</value>
+  </data>
+  <data name="GUIJSON" xml:space="preserve">
     <value>[
   {
     "command": "disasm",
@@ -634,6 +959,128 @@
 </value>
   </data>
   <data name="Search" xml:space="preserve">
+    <value>find
+ExecuteDebuggerCommand command = find start_address pattern [size]
+[integer]start_address = The address to start searching from. The search stops at the end of the memory page.
+[string]pattern = The byte pattern to search for, which can include wildcards (e.g., 'EB0?90??8D').
+[optional integer]size = The size of the data to search in. Defaults to the size of the memory region.
+Description: Find a pattern in a memory page.
+Result: $result (integer) = The virtual address where the pattern is found, or 0 if not found.
+Example:
+ExecuteDebuggerCommand command = "find 0x00401000 EB0?90??8D"
+ExecuteDebuggerCommand command = "find $csp 558BEC5??"
+
+findall
+ExecuteDebuggerCommand command = findall start_address pattern [size]
+[integer]start_address = The address to start searching from. The search stops at the end of the memory page.
+[string]pattern = The byte pattern to search for, which can include wildcards (e.g., 'EB0?90??8D').
+[optional integer]size = The size of the data to search in. Defaults to the size of the memory region.
+Description: Find all occurrences of a pattern in a memory page.
+Result: $result (integer) = The number of occurrences found.
+Example:
+ExecuteDebuggerCommand command = "findall 0x00401000 558BEC"
+ExecuteDebuggerCommand command = "findall MyFuncStart 90 0x100"
+
+findallmem
+ExecuteDebuggerCommand command = findallmem start_address pattern [size] [region]
+[integer]start_address = The address to start searching from.
+[string]pattern = The byte pattern to search for, which can include wildcards (e.g., 'EB0?90??8D').
+[optional integer]size = The size of the data to search in. Defaults to the entire memory map (-1).
+[optional string]region = Set to 'user', 'system', or 'module' to only include user modules, system modules, or a specific module in the search.
+Description: Find all occurrences of a pattern in the entire memory map. Aliases: findmemall.
+Result: $result (integer) = The number of occurrences found.
+Example:
+ExecuteDebuggerCommand command = "findallmem 0 \"MZ??????????PE\""
+ExecuteDebuggerCommand command = "findmemall 0x00400000 \"C3909090\" -1 user"
+
+findasm
+ExecuteDebuggerCommand command = findasm instruction [address] [size]
+[string]instruction = The instruction to look for (e.g., 'mov eax, ebx'). Ensure the instruction is quoted.
+[optional integer]address = Address of or inside a memory page to look in. Defaults to the current instruction pointer (CIP) if not specified.
+[optional integer]size = The size of the data to search in. Defaults to the size of the memory region.
+Description: Find assembled instruction. Aliases: asmfind.
+Result: $result (integer) = The number of references found.
+Example:
+ExecuteDebuggerCommand command = "findasm \"call eax\""
+ExecuteDebuggerCommand command = "asmfind \"push ebp\" MyModuleBase MyModuleSize"
+
+findguid
+ExecuteDebuggerCommand command = findguid [base_address] [size] [region]
+[optional integer]base_address = The base of the memory range. Defaults to RIP or EIP if not specified.
+[optional integer]size = The size of the memory range.
+[optional integer]region = The region to search: 0 for current region, 1 for current module, 2 for all modules.
+Description: Find references to a GUID. The referenced GUID must be registered in the system. Aliases: guidfind.
+Result: $result (integer) = Set to 1 if any GUID is found, 0 otherwise.
+Example:
+ExecuteDebuggerCommand command = "findguid 0 0 2"
+ExecuteDebuggerCommand command = "guidfind MyModuleBase 0x10000 1"
+
+reffind
+ExecuteDebuggerCommand command = reffind value [address] [size]
+[integer]value = The value to look for.
+[optional integer]address = Address of or inside a memory page to look in. Defaults to CIP if not specified.
+[optional integer]size = The size of the data to search in.
+Description: Find references to a certain value. Aliases: findref, ref.
+Result: $result (integer) = The number of references found.
+Example:
+ExecuteDebuggerCommand command = "reffind 0x00402010"
+ExecuteDebuggerCommand command = "ref MyDataPtr MyModuleBase MyModuleSize"
+
+reffindrange
+ExecuteDebuggerCommand command = reffindrange start_range [end_range] [address] [size]
+[integer]start_range = Start of the range (inclusive).
+[optional integer]end_range = End of the range (inclusive). Defaults to start_range if not specified.
+[optional integer]address = Address of or inside a memory page to look in. Defaults to CIP if not specified.
+[optional integer]size = The size of the data to search in.
+Description: Find references to a certain range of values. Aliases: findrefrange, refrange.
+Result: $result (integer) = The number of references found.
+Example:
+ExecuteDebuggerCommand command = "reffindrange 0x00401000 0x0040FFFF"
+ExecuteDebuggerCommand command = "refrange $csp $csp+0x100 MyStackRegion MyStackSize"
+
+findconst
+ExecuteDebuggerCommand command = findconst base_address [size]
+[integer]base_address = The base address of the module to search.
+[optional integer]size = The size of the module or memory range to search.
+Description: Find all constants in the current module that are referenced in the disassembly.
+Result: $result (integer) = The number of constants found.
+Example:
+ExecuteDebuggerCommand command = "findconst MyModuleBase MyModuleSize"
+
+findimport
+ExecuteDebuggerCommand command = findimport dll_name function_name
+[string]dll_name = The name of the DLL (e.g., 'kernel32.dll').
+[string]function_name = The name of the imported function (e.g., 'CreateFileW').
+Description: Find references to imported functions by name.
+Result: $result (integer) = The number of references to the imported function found.
+Example:
+ExecuteDebuggerCommand command = "findimport user32.dll MessageBoxA"
+ExecuteDebuggerCommand command = "findimport ntdll.dll NtQueryInformationProcess"
+
+findunicode
+ExecuteDebuggerCommand command = findunicode string [base_address] [size]
+[string]string = The Unicode string to search for. Enclose it in quotes.
+[optional integer]base_address = Starting address for the search.
+[optional integer]size = Size of the memory region to search.
+Description: Search for a Unicode string in memory.
+Result: $result (integer) = Number of matches found.
+Example:
+ExecuteDebuggerCommand command = "findunicode \"Registry Key\""
+ExecuteDebuggerCommand command = "findunicode \"Complete\" 0x00400000 0x100000"
+
+findascii
+ExecuteDebuggerCommand command = findascii string [base_address] [size]
+[string]string = The ASCII string to search for. Enclose it in quotes.
+[optional integer]base_address = Starting address for the search.
+[optional integer]size = Size of the memory region to search.
+Description: Search for an ASCII string in memory.
+Result: $result (integer) = Number of matches found.
+Example:
+ExecuteDebuggerCommand command = "findascii \"Copyright\""
+ExecuteDebuggerCommand command = "findascii \"Error:\" MyModuleBase MyModuleSize"
+</value>
+  </data>
+  <data name="SearchJSON" xml:space="preserve">
     <value>[
   {
     "command": "find",
@@ -956,6 +1403,80 @@
 </value>
   </data>
   <data name="ThreadControl" xml:space="preserve">
+    <value>createthread
+ExecuteDebuggerCommand command = createthread entry_point [argument]
+[integer]entry_point = The memory address where the new thread will begin execution.
+[optional integer]argument = The argument to pass to the new thread. Defaults to 0 if not specified.
+Description: Creates a new thread at the specified entry point. Aliases: threadcreate, newthread, threadnew.
+Result: $result (integer) = The thread ID of the newly created thread.
+Example:
+ExecuteDebuggerCommand command = "createthread 0x00405000"
+ExecuteDebuggerCommand command = "newthread MyThreadStartRoutine 0xABCDEF01"
+
+switchthread
+ExecuteDebuggerCommand command = switchthread [thread_id]
+[optional integer]thread_id = The ID of the thread to switch to. Defaults to the main thread if not specified.
+Description: Switches the debugger's context to another thread, updating the displayed call stack and registers. Aliases: threadswitch.
+Example:
+ExecuteDebuggerCommand command = "switchthread 1234"
+ExecuteDebuggerCommand command = "threadswitch"
+
+suspendthread
+ExecuteDebuggerCommand command = suspendthread [thread_id]
+[optional integer]thread_id = The ID of the thread to suspend. Defaults to the main thread if not specified.
+Description: Suspends the specified thread in the debuggee. Aliases: threadsuspend.
+Example:
+ExecuteDebuggerCommand command = "suspendthread 5678"
+ExecuteDebuggerCommand command = "threadsuspend"
+
+resumethread
+ExecuteDebuggerCommand command = resumethread [thread_id]
+[optional integer]thread_id = The ID of the thread to resume. Defaults to the main thread if not specified.
+Description: Resumes a previously suspended thread in the debuggee. Aliases: threadresume.
+Example:
+ExecuteDebuggerCommand command = "resumethread 5678"
+ExecuteDebuggerCommand command = "threadresume"
+
+killthread
+ExecuteDebuggerCommand command = killthread [thread_id] [exit_code]
+[optional integer]thread_id = The ID of the thread to terminate. Defaults to the main thread if not specified.
+[optional integer]exit_code = The exit code to use when terminating the thread. Defaults to 0 if not specified.
+Description: Terminates a thread within the debuggee. Aliases: threadkill.
+Example:
+ExecuteDebuggerCommand command = "killthread 9012 1"
+ExecuteDebuggerCommand command = "threadkill 9012"
+
+suspendallthreads
+ExecuteDebuggerCommand command = suspendallthreads
+Description: Suspends all threads in the debuggee. Aliases: threadsuspendall.
+Example:
+ExecuteDebuggerCommand command = "suspendallthreads"
+
+resumeallthreads
+ExecuteDebuggerCommand command = resumeallthreads
+Description: Resumes all suspended threads in the debuggee. Aliases: threadresumeall.
+Example:
+ExecuteDebuggerCommand command = "resumeallthreads"
+
+setthreadpriority
+ExecuteDebuggerCommand command = setthreadpriority thread_id priority
+[integer]thread_id = The ID of the thread whose priority is to be changed.
+[string]priority = The new priority level. Can be an integer or one of the following strings: "Normal", "AboveNormal", "TimeCritical", "Idle", "BelowNormal", "Highest", "Lowest".
+Description: Sets the priority of a specified thread in the debuggee. Aliases: setprioritythread, threadsetpriority.
+Example:
+ExecuteDebuggerCommand command = "setthreadpriority 1234 TimeCritical"
+ExecuteDebuggerCommand command = "threadsetpriority 5678 Idle"
+
+setthreadname
+ExecuteDebuggerCommand command = setthreadname thread_id [name]
+[integer]thread_id = The ID of the thread to name.
+[optional string]name = The new name for the thread. If left empty, the current name will be removed.
+Description: Assigns a name to a specified thread for debugging purposes. This name is used only within the debugger and does not affect the debuggee. Aliases: threadsetname.
+Example:
+ExecuteDebuggerCommand command = "setthreadname 1234,Network Listener"
+ExecuteDebuggerCommand command = "threadsetname 5678"</value>
+  </data>
+  <data name="ThreadControlJSON" xml:space="preserve">
     <value>[
   {
     "command": "createthread",

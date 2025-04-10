@@ -24,9 +24,13 @@ namespace DotNetPlugin
         {
             //DisableServerHeader(); //Prob not needed
             _targetType = commandSourceType;
-            _listener.Prefixes.Add("http://localhost:3001/sse/"); //Request come in without a trailing '/' but are still handled
-            _listener.Prefixes.Add("http://localhost:3001/message/");
+            string IPAddress = "+";
+            Console.WriteLine("MCP server lising on " + IPAddress);
+            _listener.Prefixes.Add("http://" + IPAddress + ":3001/sse/"); //Request come in without a trailing '/' but are still handled
+            _listener.Prefixes.Add("http://" + IPAddress + ":3001/message/");
 
+            //_listener.Prefixes.Add("http://127.0.0.1:3001/sse/"); //Request come in without a trailing '/' but are still handled
+            //_listener.Prefixes.Add("http://127.0.0.1:3001/message/");
             // Reflect and register [Command] methods
             foreach (var method in commandSourceType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -146,7 +150,7 @@ namespace DotNetPlugin
         }
 
 
-    public static void PrettyPrintJson(string json)
+    public static void PrettyPrintJson(string json) //x64Dbg does not support {}, remove them or it will crash
     {
         try
         {

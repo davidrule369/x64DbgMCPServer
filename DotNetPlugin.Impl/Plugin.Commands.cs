@@ -134,9 +134,9 @@ namespace DotNetPlugin
             var map = new Dictionary<string, string>
             {
                 { "debugcontrol", Resources.DebugControl },
-                { "gui", Resources.GUI },
-                { "search", Resources.Search },
-                { "threadcontrol", Resources.ThreadControl }
+                { "gui", Resources.GUIJSON },
+                { "search", Resources.SearchJSON },
+                { "threadcontrol", Resources.ThreadControlJSON }
             };
 
             if (string.IsNullOrWhiteSpace(subject))

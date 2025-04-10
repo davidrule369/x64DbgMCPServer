@@ -71,6 +71,22 @@ namespace DotNetPlugin.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Debugger Command Help Manual
+        ///InitDebug
+        ///
+        ///ExecuteDebuggerCommand command = InitDebug executable_path [command_line] [current_folder]
+        ///[string]executable_path = Path to the executable file to debug. If a full path is not provided, the current directory is used. Enclose paths with spaces in quotation marks.
+        ///[optional string]command_line = Command line arguments to pass to the process.
+        ///[optional string]current_folder = Working directory for the process.
+        ///Description: Initializes the debugger by loading the  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string DebugControl {
+            get {
+                return ResourceManager.GetString("DebugControl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to [
         ///  {
         ///    &quot;command&quot;: &quot;InitDebug&quot;,
@@ -82,9 +98,29 @@ namespace DotNetPlugin.Properties {
         ///        &quot;type&quot;: &quot;string&quot;,
         ///        &quot;description&quot;: &quot;Path to the executable file to debug. If a full path is  [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string DebugControl {
+        internal static string DebugControlJSON {
             get {
-                return ResourceManager.GetString("DebugControl", resourceCulture);
+                return ResourceManager.GetString("DebugControlJSON", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to disasm
+        ///ExecuteDebuggerCommand command = disasm address
+        ///[integer]address = The memory address to display in the disassembly view.
+        ///Description: Opens the disassembly view at the specified address. Aliases: dis, d.
+        ///Example:
+        ///ExecuteDebuggerCommand command = &quot;dis 0x00401000&quot;
+        ///ExecuteDebuggerCommand command = &quot;d MyFunctionEntry&quot;
+        ///
+        ///dump
+        ///ExecuteDebuggerCommand command = dump address
+        ///[integer]address = The memory address to display in the dump view.
+        ///Description: Opens the dump view at the specified address. [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string GUI {
+            get {
+                return ResourceManager.GetString("GUI", resourceCulture);
             }
         }
         
@@ -111,9 +147,24 @@ namespace DotNetPlugin.Properties {
         ///      {
         ///        &quot;name&quot;:  [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string GUI {
+        internal static string GUIJSON {
             get {
-                return ResourceManager.GetString("GUI", resourceCulture);
+                return ResourceManager.GetString("GUIJSON", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to find
+        ///ExecuteDebuggerCommand command = find start_address pattern [size]
+        ///[integer]start_address = The address to start searching from. The search stops at the end of the memory page.
+        ///[string]pattern = The byte pattern to search for, which can include wildcards (e.g., &apos;EB0?90??8D&apos;).
+        ///[optional integer]size = The size of the data to search in. Defaults to the size of the memory region.
+        ///Description: Find a pattern in a memory page.
+        ///Result: $result (integer) = The virtual address where the pattern is found, [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Search {
+            get {
+                return ResourceManager.GetString("Search", resourceCulture);
             }
         }
         
@@ -137,9 +188,25 @@ namespace DotNetPlugin.Properties {
         ///      {
         ///  [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string Search {
+        internal static string SearchJSON {
             get {
-                return ResourceManager.GetString("Search", resourceCulture);
+                return ResourceManager.GetString("SearchJSON", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to createthread
+        ///ExecuteDebuggerCommand command = createthread entry_point [argument]
+        ///[integer]entry_point = The memory address where the new thread will begin execution.
+        ///[optional integer]argument = The argument to pass to the new thread. Defaults to 0 if not specified.
+        ///Description: Creates a new thread at the specified entry point. Aliases: threadcreate, newthread, threadnew.
+        ///Result: $result (integer) = The thread ID of the newly created thread.
+        ///Example:
+        ///ExecuteDebuggerCommand command = &quot;createthread 0 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ThreadControl {
+            get {
+                return ResourceManager.GetString("ThreadControl", resourceCulture);
             }
         }
         
@@ -160,9 +227,9 @@ namespace DotNetPlugin.Properties {
         ///        &quot;type&quot;: &quot;integer&quot;,
         ///        &quot;description&quot;: &quot;The argument to pass to the new thread. Defaults to 0 if not  [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string ThreadControl {
+        internal static string ThreadControlJSON {
             get {
-                return ResourceManager.GetString("ThreadControl", resourceCulture);
+                return ResourceManager.GetString("ThreadControlJSON", resourceCulture);
             }
         }
     }
