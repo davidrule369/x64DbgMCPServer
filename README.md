@@ -1,4 +1,4 @@
-# X64Dbg MCP Server
+# X64Dbg MCP Server (plugin)
 This project is a starting point for building an MCP (Memory Command Protocol) server plugin for x96/x64/x32dbg https://github.com/x64dbg/x64dbg/ using C# on the classic Windows-only .NET Framework platform (No ASP.NET Core hosting required).
 
 The plugin acts as a lightweight HTTP interface bridge between an MCP client and the debugger, allowing you to have an LLM MCP client interactively send commands to inspect memory, disassemble, query registers, manipulate labels/comments, and more—all remotely and programmatically.
@@ -53,12 +53,19 @@ These commands return JSON or text-formatted output that’s suitable for ingest
 ![image](https://github.com/user-attachments/assets/f954feab-4518-4368-8b0a-d6ec07212122)
 ![image](https://github.com/user-attachments/assets/2952e4eb-76ef-460c-9124-0e3c1167fa3d)
 
+## Debugging
+DotNetPlugin.Impl contains the following within the project build post commands. Update it to reflect the corret path to x64dbg for faster debugging:
+xcopy /Y /I "$(TargetDir)*.*" "C:\Users\User\Desktop\x96\release\x64\plugins\"
+C:\Users\User\Desktop\x96\release\x64\x64dbg.exe
 
 ## Actively working on implementing several functions
 Not every command is fully implemented althrough I am actively working on getting this project moving to support full stack, thread and module dumps for the AI to query.
 
 ## How It Works
 The MCP server runs a simple HTTP listener and routes incoming commands to C# methods marked with the [Command] attribute. These methods can perform any logic (e.g., memory reads, disassembly, setting breakpoints) and return data in a structured format back to a MCP client.
+
+## Known Issues
+ExecuteDebuggerCommand always returns true as it pertains to the comment successfully being execute and not the results of the actual command.
 
 ## Special thanks
 ⚡ With the help of DotNetPluginCS by Adams85. That and roughly ~20 hours of focused coding, MCP Protocol review resulted in a decent proof-of-concept self-contained HTTP MCP server plugin for x64dbg.
