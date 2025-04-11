@@ -14,6 +14,9 @@ On top of essential bindings to the x64dbg debugger engine, this template offers
 ✅ Plugin reload without restarting x64dbg
 ✅ Expression function and menu extension support
 
+## Sample Conversation:
+https://github.com/AgentSmithers/x64DbgMCPServer/blob/master/Sample1
+
 ## Prerequisites
 To build and run this project, you'll need:
 Visual Studio Build Tools (2019 v16.7 or later)
