@@ -6,7 +6,7 @@ The plugin acts as a lightweight HTTP interface bridge between an MCP client and
 On top of essential bindings to the x64dbg debugger engine, this template offers a clean project structure, a built-in command system, and a simple HTTP listener that exposes your commands through a text-based API. 
 
 # X64Dbg MCP Client - Need a client to sample?
-[mcp-csharp-sdk-client.zip](https://github.com/user-attachments/files/19696922/mcp-csharp-sdk-client.zip)
+[mcp-csharp-sdk-client.zip](https://github.com/user-attachments/files/19697365/mcp-csharp-sdk-client.zip)
 
 Open the project
 Edit line 590 in Program.cs and enter your GeminiAI key from Google Cloud API.
