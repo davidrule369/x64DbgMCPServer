@@ -44,6 +44,7 @@ copy the files (x64DbgMCPServer\bin\x64\Debug) into the x64DBG plugin (x96\relea
 ![image](https://github.com/user-attachments/assets/8511452e-b65c-4bc8-83ff-885c384d0bbe)
 
 Sample Debug log when loaded
+
 ![image](https://github.com/user-attachments/assets/02eb35d8-8584-46de-83c6-b535d23976b9)
 
 Start the Debugger, goto plugins -> Click "Start MCP Server"
