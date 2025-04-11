@@ -90,7 +90,7 @@
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /Y /I &quot;$(TargetDir)*.*&quot; &quot;C:\Users\User\Desktop\x96\release\x64\plugins\&quot;&#xD;&#xA;rem start cmd /c C:\Users\User\Desktop\x96\release\x96dbg.exe" />
+    <Exec Command="xcopy /Y /I &quot;$(TargetDir)*.*&quot; &quot;C:\Users\User\Desktop\x96\release\x64\plugins\x64DbgMCPServer&quot;&#xD;&#xA;rem start cmd /c C:\Users\User\Desktop\x96\release\x96dbg.exe" />
   </Target>
 
 </Project>
