@@ -395,11 +395,13 @@ namespace DotNetPlugin
                                             string paramName = param.Name;
                                             string paramType = GetJsonSchemaType(param.ParameterType);
 
+     
                                             properties[paramName] = new
                                             {
                                                 type = paramType,
                                                 description = $"Parameter for {commandName}"
                                             };
+                                                
 
                                             if (!param.IsOptional)
                                             {
@@ -408,20 +410,39 @@ namespace DotNetPlugin
                                         }
 
                                         // Create the tool definition
-                                        var tool = new
+                                        object tool;
+                                        if (attribute.MCPCmdDescription != null)
                                         {
-                                            name = commandName,
-                                            description = $"Command: {commandName}",
-                                            inputSchema = new
+                                            tool = new
                                             {
-                                                title = commandName,
+                                                name = commandName,
+                                                description = attribute.MCPCmdDescription,
+                                                inputSchema = new
+                                                {
+                                                    title = commandName,
+                                                    description = attribute.MCPCmdDescription,
+                                                    type = "object",
+                                                    properties = properties,
+                                                    required = required.ToArray()
+                                                }
+                                            };
+                                        }
+                                        else
+                                        {                                        
+                                            tool = new
+                                            {
+                                                name = commandName,
                                                 description = $"Command: {commandName}",
-                                                type = "object",
-                                                properties = properties,
-                                                required = required.ToArray()
-                                            }
-                                        };
-
+                                                inputSchema = new
+                                                {
+                                                    title = commandName,
+                                                    description = $"Command: {commandName}",
+                                                    type = "object",
+                                                    properties = properties,
+                                                    required = required.ToArray()
+                                                }
+                                            };
+                                        }
                                         toolsList.Add(tool);
                                     }
                                 }

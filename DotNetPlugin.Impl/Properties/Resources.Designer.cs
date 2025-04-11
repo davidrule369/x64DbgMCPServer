@@ -73,12 +73,11 @@ namespace DotNetPlugin.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Debugger Command Help Manual
         ///InitDebug
-        ///
         ///ExecuteDebuggerCommand command = InitDebug executable_path [command_line] [current_folder]
         ///[string]executable_path = Path to the executable file to debug. If a full path is not provided, the current directory is used. Enclose paths with spaces in quotation marks.
         ///[optional string]command_line = Command line arguments to pass to the process.
         ///[optional string]current_folder = Working directory for the process.
-        ///Description: Initializes the debugger by loading the  [rest of string was truncated]&quot;;.
+        ///Description: Initializes the debugger by loading the sp [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string DebugControl {
             get {

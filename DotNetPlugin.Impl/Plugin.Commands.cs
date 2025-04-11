@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -118,14 +119,14 @@ namespace DotNetPlugin
         /// </summary>
         /// <param name="command">The debugger command string to execute.</param>
         /// <returns>True if the command executed successfully, false otherwise.</returns>
-        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true)]
+        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe")]
         public static bool ExecuteDebuggerCommand(string command)
         {
             Console.WriteLine("Executeing DebuggerCommand: " + command);
             return DbgCmdExec(command);
         }
 
-        [Command("ListDebuggerCommands", DebugOnly = false, MCPOnly = true)]
+        [Command("ListDebuggerCommands", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "ListDebuggerCommands")]
         public static string ListDebuggerCommands(string subject = "")
         {
             subject = subject?.Trim().ToLowerInvariant();
@@ -152,7 +153,13 @@ namespace DotNetPlugin
             return "Unknown subject group. Try one of:\n- DebugControl\n- GUI\n- Search\n- ThreadControl";
         }
 
-
+        [Command("DbgValFromString", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "DbgValFromString value=pid")]
+        public static nuint DbgValFromString(string value)// = "$hProcess"
+        {
+            Console.WriteLine("Executing DbgValFromString: " + value);
+            return Bridge.DbgValFromString(value);
+        }
+        
 
         [Command("ExecuteDebuggerCommandDirect", DebugOnly = false)]
         public static bool ExecuteDebuggerCommandDirect(string[] args)
@@ -332,7 +339,7 @@ namespace DotNetPlugin
         //    return success;
         //}
 
-        [Command("WriteMemToAddress", DebugOnly = true, MCPOnly = true)]
+        [Command("WriteMemToAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "")]
         public static string WriteMemToAddress(string addressStr, string byteString)
         {
             try
@@ -376,7 +383,7 @@ namespace DotNetPlugin
             }
         }
 
-        [Command("CommentOrLabelAtAddress", DebugOnly = true, MCPOnly = true)]
+        [Command("CommentOrLabelAtAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "CommentOrLabelAtAddress addressStr=0x12345678, value=LabelTextGoeshere, mode=Label\r\nCommentOrLabelAtAddress addressStr=0x12345678, value=LabelTextGoeshere, mode=Comment\r\n")]
         public static string CommentOrLabelAtAddress(string addressStr, string value, string mode = "Label")
         {
             try
@@ -499,7 +506,7 @@ namespace DotNetPlugin
         //    }
         //}
 
-        [Command("GetLabel", DebugOnly = true, MCPOnly = true)]
+        [Command("GetLabel", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetLabel addressStr=0x12345678")]
         public static string GetLabel(string addressStr)
         {
             try
@@ -886,7 +893,7 @@ namespace DotNetPlugin
         }
 
 
-        [Command("GetAllModulesFromMemMap", DebugOnly = true, MCPOnly = true)]
+        [Command("GetAllModulesFromMemMap", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetAllModulesFromMemMap")]
         public static string GetAllModulesFromMemMap()
         {
             try
@@ -1002,7 +1009,7 @@ namespace DotNetPlugin
         }
 
 
-        [Command("GetCallStack", DebugOnly = true, MCPOnly = true)]
+        [Command("GetCallStack", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetCallStack")]
         public static string GetCallStack(int maxFrames = 32)
         {
             // Define buffer sizes matching C++ MAX_ defines
@@ -1182,7 +1189,7 @@ namespace DotNetPlugin
         //    return callstack;
         //}
 
-        [Command("GetAllActiveThreads", DebugOnly = true, MCPOnly = true)]
+        [Command("GetAllActiveThreads", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetAllActiveThreads")]
         public static string GetAllActiveThreads()
         {
             try
@@ -1289,7 +1296,7 @@ namespace DotNetPlugin
 
 
 
-        [Command("GetAllRegisters", DebugOnly = true, MCPOnly = true)]
+        [Command("GetAllRegisters", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetAllRegisters")]
         public static string GetAllRegistersAsStrings()
         {
             string[] regNames = new[]
@@ -1320,7 +1327,7 @@ namespace DotNetPlugin
         }
 
 
-        [Command("ReadDismAtAddress", DebugOnly = true, MCPOnly = true)]
+        [Command("ReadDismAtAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "ReadDismAtAddress addressStr=0x12345678, byteCount=50")]
         public static string ReadDismAtAddress(string addressStr, int byteCount)
         {
             try
@@ -1410,7 +1417,7 @@ namespace DotNetPlugin
 
 
 
-        [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true)]
+        [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "DumpModuleToFile pfilepath=C:\\Output.txt")]
         public static void DumpModuleToFile(string[] pfilepath)
         {
             string filePath = pfilepath[0];//@"C:\dump.txt"; // Hardcoded file path as requested

@@ -12,18 +12,18 @@ namespace DotNetPlugin
             menus.Main
                 .AddAndConfigureItem("&StartMCPServer", StartMCPServer).SetIcon(Resources.AboutIcon).Parent
                 .AddAndConfigureItem("&StopMCPServer", StopMCPServer).SetIcon(Resources.AboutIcon).Parent
-                .AddAndConfigureItem("&CustomCommand", ExecuteCustomCommand).SetIcon(Resources.AboutIcon).Parent
-                .AddAndConfigureItem("&About...", OnAboutMenuItem).SetIcon(Resources.AboutIcon).Parent
-                .AddAndConfigureItem("&DotNetDumpProcess", OnDumpMenuItem).SetHotKey("CTRL+F12").Parent
-                .AddAndConfigureSubMenu("sub menu")
-                    .AddItem("sub menu entry1", menuItem => Console.WriteLine($"hEntry={menuItem.Id}"))
-                    .AddSeparator()
-                    .AddItem("sub menu entry2", menuItem => Console.WriteLine($"hEntry={menuItem.Id}"));
+                .AddAndConfigureItem("&About...", OnAboutMenuItem).SetIcon(Resources.AboutIcon);
+            //.AddAndConfigureItem("&CustomCommand", ExecuteCustomCommand).SetIcon(Resources.AboutIcon).Parent
+            //.AddAndConfigureItem("&DotNetDumpProcess", OnDumpMenuItem).SetHotKey("CTRL+F12").Parent
+            //.AddAndConfigureSubMenu("sub menu")
+            //    .AddItem("sub menu entry1", menuItem => Console.WriteLine($"hEntry={menuItem.Id}"))
+            //    .AddSeparator()
+            //    .AddItem("sub menu entry2", menuItem => Console.WriteLine($"hEntry={menuItem.Id}"));
         }
 
         public void OnAboutMenuItem(MenuItem menuItem)
         {
-            MessageBox.Show(HostWindow, "DotNet Plugin For x64dbg\nCoded By <your_name_here>", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(HostWindow, "x64DbgMCPServer Plugin For x64dbg\nCoded By AgentSmithers", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         public static void OnDumpMenuItem(MenuItem menuItem)
