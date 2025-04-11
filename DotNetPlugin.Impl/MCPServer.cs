@@ -171,7 +171,7 @@ namespace DotNetPlugin
         }
     }
 
-
+        static bool pDebug = false;
     private static readonly Dictionary<string, StreamWriter> _sseSessions = new Dictionary<string, StreamWriter>();
 
         private async void OnRequest(IAsyncResult ar) // Make async void for simplicity here, consider Task for robustness
@@ -179,18 +179,19 @@ namespace DotNetPlugin
             HttpListenerContext ctx = _listener.EndGetContext(ar);
             _listener.BeginGetContext(OnRequest, null); // loop
 
-            Console.WriteLine("=== Incoming Request ===");
-            Console.WriteLine($"Method: {ctx.Request.HttpMethod}");
-            Console.WriteLine($"URL: {ctx.Request.Url}");
-            Console.WriteLine($"Headers:");
-            foreach (string key in ctx.Request.Headers)
+            if (pDebug)
             {
-                Console.WriteLine($"  {key}: {ctx.Request.Headers[key]}");
+                Console.WriteLine("=== Incoming Request ===");
+                Console.WriteLine($"Method: {ctx.Request.HttpMethod}");
+                Console.WriteLine($"URL: {ctx.Request.Url}");
+                Console.WriteLine($"Headers:");
+                foreach (string key in ctx.Request.Headers)
+                {
+                    Console.WriteLine($"  {key}: {ctx.Request.Headers[key]}");
+                }
+                Console.WriteLine("=========================");
             }
-
             string requestBody = null; // Variable to store the body
-            Console.WriteLine("=========================");
-
             ctx.Response.Headers["Server"] = "Kestrel";
 
             if (ctx.Request.HttpMethod == "POST")
@@ -213,20 +214,29 @@ namespace DotNetPlugin
 
                         if (ctx.Request.HasEntityBody)
                         {
-                            Console.WriteLine("Body:");
-                            Debug.WriteLine("jsonBody:" + jsonBody);
+                            if (pDebug)
+                            {
+                                Console.WriteLine("Body:");
+                                Debug.WriteLine("jsonBody:" + jsonBody);
+                            }
                             //Console.WriteLine(jsonBody);
                         }
                         else
                         {
-                            Console.WriteLine("No body.");
+                            if (pDebug)
+                            {
+                                Console.WriteLine("No body.");
+                            }
                         }
 
                         var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(jsonBody);
 
                         if (!String.IsNullOrEmpty(jsonBody))
                         {
-                            PrettyPrintJson(jsonBody);
+                            if (pDebug)
+                            {
+                                PrettyPrintJson(jsonBody);
+                            }
                         }
 
                         string method = json["method"]?.ToString();
@@ -383,7 +393,7 @@ namespace DotNetPlugin
 
                                     // Get the Command attribute to access its properties
                                     var attribute = methodInfo.GetCustomAttribute<CommandAttribute>();
-                                    if (attribute != null && (!attribute.DebugOnly || Debugger.IsAttached || Bridge.DbgIsDebugging()))
+                                    if (attribute != null && (!attribute.DebugOnly || Debugger.IsAttached || (Bridge.DbgIsDebugging() && Bridge.DbgValFromString("$pid") > 0 )))
                                     {
                                         // Get parameter info for the method
                                         var parameters = methodInfo.GetParameters();
@@ -394,12 +404,39 @@ namespace DotNetPlugin
                                         {
                                             string paramName = param.Name;
                                             string paramType = GetJsonSchemaType(param.ParameterType);
+                                            string paramdescription = $"Parameter for {commandName}";
+                                            switch (paramName) // Removed 'case' from here
+                                            {
+                                                case "address":
+                                                    paramdescription = "Address to target with function (Example format: 0x12345678)";
+                                                    break; // Added break
+                                                case "value":
+                                                    paramdescription = "value to pass to command (Example format: 100)";
+                                                    break; // Added break
+                                                case "byteCount":
+                                                    paramdescription = "Count of how many bytes to request for (Example format: 100)";
+                                                    break; // Added break
+                                                case "pfilepath":
+                                                    paramdescription = "File path (Example format: C:\\output.txt)";
+                                                    break;
+                                                case "mode":
+                                                    paramdescription = "mode=[Comment | Label] (Example format: mode=Comment)";
+                                                    break;
+                                                case "byteString":
+                                                    paramdescription = "Writes the provided Hex bytes .. .. (Example format: byteString=00 90 0F)";
+                                                    break;
+                                                default:
+                                                    // No action needed here since the default description is already set above.
+                                                    // The break is technically optional for the last section (default),
+                                                    // but good practice to include.
+                                                    break;
+                                            }
 
-     
+
                                             properties[paramName] = new
                                             {
                                                 type = paramType,
-                                                description = $"Parameter for {commandName}"
+                                                description = paramdescription
                                             };
                                                 
 

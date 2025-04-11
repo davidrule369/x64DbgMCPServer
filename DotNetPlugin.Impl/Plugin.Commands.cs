@@ -23,7 +23,7 @@ namespace DotNetPlugin
 {
     partial class Plugin
     {
-        [Command("DotNetpluginTestCommand")]
+        //[Command("DotNetpluginTestCommand")]
         public static void cbNetTestCommand(string[] args)
         {
             Console.WriteLine(".Net test command!");
@@ -35,7 +35,7 @@ namespace DotNetPlugin
                 Console.WriteLine($"line: {Left}");
         }
 
-        [Command("DotNetDumpProcess", DebugOnly = true)]
+        //[Command("DotNetDumpProcess", DebugOnly = true)]
         public static bool cbDumpProcessCommand(string[] args)
         {
             var addr = args.Length >= 2 ? Bridge.DbgValFromString(args[1]) : Bridge.DbgValFromString("cip");
@@ -75,7 +75,7 @@ namespace DotNetPlugin
             return true;
         }
 
-        [Command("DotNetModuleEnum", DebugOnly = true)]
+        //[Command("DotNetModuleEnum", DebugOnly = true)]
         public static void cbModuleEnum(string[] args)
         {
             foreach (var mod in Module.GetList())
@@ -119,14 +119,14 @@ namespace DotNetPlugin
         /// </summary>
         /// <param name="command">The debugger command string to execute.</param>
         /// <returns>True if the command executed successfully, false otherwise.</returns>
-        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe")]
+        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe\r\nNote: See ListDebuggerCommands for list of applicable commands.")]
         public static bool ExecuteDebuggerCommand(string command)
         {
-            Console.WriteLine("Executeing DebuggerCommand: " + command);
+            Console.WriteLine("Executing DebuggerCommand: " + command);
             return DbgCmdExec(command);
         }
 
-        [Command("ListDebuggerCommands", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "ListDebuggerCommands")]
+        [Command("ListDebuggerCommands", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ListDebuggerCommands")]
         public static string ListDebuggerCommands(string subject = "")
         {
             subject = subject?.Trim().ToLowerInvariant();
@@ -135,14 +135,14 @@ namespace DotNetPlugin
             var map = new Dictionary<string, string>
             {
                 { "debugcontrol", Resources.DebugControl },
-                { "gui", Resources.GUIJSON },
-                { "search", Resources.SearchJSON },
-                { "threadcontrol", Resources.ThreadControlJSON }
+                { "gui", Resources.GUI },
+                { "search", Resources.Search },
+                { "threadcontrol", Resources.ThreadControl }
             };
 
             if (string.IsNullOrWhiteSpace(subject))
             {
-                return "Available options:\n- DebugControl\n- GUI\n- Search\n- ThreadControl\n\nExample:\nListDebuggerCommands subject=gui";
+                return "Available options:\n- debugcontrol\n- gui\n- search\n- threadcontrol\n\nExample:\nListDebuggerCommands subject=gui";
             }
 
             if (map.TryGetValue(subject, out string json))
@@ -153,7 +153,7 @@ namespace DotNetPlugin
             return "Unknown subject group. Try one of:\n- DebugControl\n- GUI\n- Search\n- ThreadControl";
         }
 
-        [Command("DbgValFromString", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "DbgValFromString value=pid")]
+        [Command("DbgValFromString", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: DbgValFromString value=$pid")]
         public static nuint DbgValFromString(string value)// = "$hProcess"
         {
             Console.WriteLine("Executing DbgValFromString: " + value);
@@ -339,8 +339,8 @@ namespace DotNetPlugin
         //    return success;
         //}
 
-        [Command("WriteMemToAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "")]
-        public static string WriteMemToAddress(string addressStr, string byteString)
+        [Command("WriteMemToAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: WriteMemToAddress address=0x12345678, byteString=0F FF 90")]
+        public static string WriteMemToAddress(string address, string byteString)
         {
             try
             {
@@ -348,10 +348,10 @@ namespace DotNetPlugin
                     return "Error: Byte string is empty.";
 
                 // Parse address
-                if (!ulong.TryParse(addressStr.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
-                    return $"Error: Invalid address: {addressStr}";
+                if (!ulong.TryParse(address.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+                    return $"Error: Invalid address: {address}";
 
-                nuint address = (nuint)parsed;
+                nuint MyAddresses = (nuint)parsed;
 
                 // Parse byte string (e.g., "90 89 78")
                 string[] byteParts = byteString.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -366,15 +366,15 @@ namespace DotNetPlugin
                     return "Error: No valid bytes found to write.";
 
                 // Write memory
-                bool success = WriteMemory(address, data);
+                bool success = WriteMemory(MyAddresses, data);
 
                 if (success)
                 {
-                    return $"Successfully wrote {data.Length} byte(s) to 0x{address:X}:\r\n{BitConverter.ToString(data)}";
+                    return $"Successfully wrote {data.Length} byte(s) to 0x{MyAddresses:X}:\r\n{BitConverter.ToString(data)}";
                 }
                 else
                 {
-                    return $"Failed to write memory at 0x{address:X}";
+                    return $"Failed to write memory at 0x{(uint)MyAddresses:X}";
                 }
             }
             catch (Exception ex)
@@ -383,27 +383,27 @@ namespace DotNetPlugin
             }
         }
 
-        [Command("CommentOrLabelAtAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "CommentOrLabelAtAddress addressStr=0x12345678, value=LabelTextGoeshere, mode=Label\r\nCommentOrLabelAtAddress addressStr=0x12345678, value=LabelTextGoeshere, mode=Comment\r\n")]
-        public static string CommentOrLabelAtAddress(string addressStr, string value, string mode = "Label")
+        [Command("CommentOrLabelAtAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: CommentOrLabelAtAddress address=0x12345678, value=LabelTextGoeshere, mode=Label\r\nExample: CommentOrLabelAtAddress address=0x12345678, value=LabelTextGoeshere, mode=Comment\r\n")]
+        public static string CommentOrLabelAtAddress(string address, string value, string mode = "Label")
         {
             try
             {
                 bool success = false;
                 // Parse address
-                if (!ulong.TryParse(addressStr.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
-                    return $"Error: Invalid address: {addressStr}";
+                if (!ulong.TryParse(address.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ulong parsed))
+                    return $"Error: Invalid address: {address}";
 
-                nuint address = (nuint)parsed;
+                nuint MyAddresses = (nuint)parsed;
 
                 if (string.Equals(mode, "Label", StringComparison.OrdinalIgnoreCase))
                 {
-                    success = Bridge.DbgSetLabelAt(address, value);
-                    Console.WriteLine($"Label '{value}' added at {address:X} (byte pattern match)");
+                    success = Bridge.DbgSetLabelAt(MyAddresses, value);
+                    Console.WriteLine($"Label '{value}' added at {MyAddresses:X} (byte pattern match)");
                 }
                 else if (string.Equals(mode, "Comment", StringComparison.OrdinalIgnoreCase))
                 {
-                    success = Bridge.DbgSetCommentAt(address, value);
-                    Console.WriteLine($"Comment '{value}' added at {address:X} (byte pattern match)");
+                    success = Bridge.DbgSetCommentAt(MyAddresses, value);
+                    Console.WriteLine($"Comment '{value}' added at {MyAddresses:X} (byte pattern match)");
                 }
                 if (success)
                 {
@@ -411,7 +411,7 @@ namespace DotNetPlugin
                 }
                 else
                 {
-                    return $"Failed to write memory at 0x{address:X}";
+                    return $"Failed to write memory at 0x{MyAddresses:X}";
                 }
             }
             catch (Exception ex)
@@ -506,7 +506,7 @@ namespace DotNetPlugin
         //    }
         //}
 
-        [Command("GetLabel", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetLabel addressStr=0x12345678")]
+        [Command("GetLabel", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: GetLabel addressStr=0x12345678")]
         public static string GetLabel(string addressStr)
         {
             try
@@ -893,7 +893,7 @@ namespace DotNetPlugin
         }
 
 
-        [Command("GetAllModulesFromMemMap", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetAllModulesFromMemMap")]
+        [Command("GetAllModulesFromMemMap", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: GetAllModulesFromMemMap")]
         public static string GetAllModulesFromMemMap()
         {
             try
@@ -1009,7 +1009,7 @@ namespace DotNetPlugin
         }
 
 
-        [Command("GetCallStack", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetCallStack")]
+        [Command("GetCallStack", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: GetCallStack\r\nExample: GetCallStack, maxFrames=32")]
         public static string GetCallStack(int maxFrames = 32)
         {
             // Define buffer sizes matching C++ MAX_ defines
@@ -1189,7 +1189,7 @@ namespace DotNetPlugin
         //    return callstack;
         //}
 
-        [Command("GetAllActiveThreads", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetAllActiveThreads")]
+        [Command("GetAllActiveThreads", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: GetAllActiveThreads")]
         public static string GetAllActiveThreads()
         {
             try
@@ -1296,7 +1296,7 @@ namespace DotNetPlugin
 
 
 
-        [Command("GetAllRegisters", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "GetAllRegisters")]
+        [Command("GetAllRegisters", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: GetAllRegisters")]
         public static string GetAllRegistersAsStrings()
         {
             string[] regNames = new[]
@@ -1327,15 +1327,15 @@ namespace DotNetPlugin
         }
 
 
-        [Command("ReadDismAtAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "ReadDismAtAddress addressStr=0x12345678, byteCount=50")]
-        public static string ReadDismAtAddress(string addressStr, int byteCount)
+        [Command("ReadDismAtAddress", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: ReadDismAtAddress address=0x12345678, byteCount=100")]
+        public static string ReadDismAtAddress(string address, int byteCount)
         {
             try
             {
                 // Parse address string
-                nuint address = (nuint)Convert.ToUInt64(
-                    addressStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? addressStr.Substring(2) : addressStr,
-                    addressStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
+                nuint MyAddresses = (nuint)Convert.ToUInt64(
+                    address.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? address.Substring(2) : address,
+                    address.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? 16 : 10
                 );
 
                 int instructionCount = 0;
@@ -1346,7 +1346,7 @@ namespace DotNetPlugin
 
                 while (instructionCount < MAX_INSTRUCTIONS && bytesRead < byteCount)
                 {
-                    string label = GetLabel(address);
+                    string label = GetLabel(MyAddresses);
                     if (!string.IsNullOrEmpty(label))
                     {
                         output.AppendLine();
@@ -1354,11 +1354,11 @@ namespace DotNetPlugin
                     }
 
                     var disasm = new Bridge.BASIC_INSTRUCTION_INFO();
-                    Bridge.DbgDisasmFastAt(address, ref disasm);
+                    Bridge.DbgDisasmFastAt(MyAddresses, ref disasm);
 
                     if (disasm.size == 0)
                     {
-                        address += 1;
+                        MyAddresses += 1;
                         bytesRead += 1;
                         continue;
                     }
@@ -1389,13 +1389,13 @@ namespace DotNetPlugin
                         }
                     }
 
-                    string bytes = BitConverter.ToString(ReadMemory(address, (uint)disasm.size));
-                    output.Append($"{address.ToPtrString()}  {bytes,-20}  {disasm.instruction}");
+                    string bytes = BitConverter.ToString(ReadMemory(MyAddresses, (uint)disasm.size));
+                    output.Append($"{MyAddresses.ToPtrString()}  {bytes,-20}  {disasm.instruction}");
                     if (inlineString != null)
                         output.Append($"    ; \"{inlineString}\"");
                     output.AppendLine();
 
-                    address += (nuint)disasm.size;
+                    MyAddresses += (nuint)disasm.size;
                     bytesRead += disasm.size;
                     instructionCount++;
                 }
@@ -1417,7 +1417,7 @@ namespace DotNetPlugin
 
 
 
-        [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "DumpModuleToFile pfilepath=C:\\Output.txt")]
+        [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: DumpModuleToFile pfilepath=C:\\Output.txt")]
         public static void DumpModuleToFile(string[] pfilepath)
         {
             string filePath = pfilepath[0];//@"C:\dump.txt"; // Hardcoded file path as requested

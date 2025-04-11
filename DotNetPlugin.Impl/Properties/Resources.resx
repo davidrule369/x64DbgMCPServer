@@ -994,8 +994,8 @@ ExecuteDebuggerCommand command = findallmem start_address pattern [size] [region
 Description: Find all occurrences of a pattern in the entire memory map. Aliases: findmemall.
 Result: $result (integer) = The number of occurrences found.
 Example:
-ExecuteDebuggerCommand command = "findallmem 0 \"MZ??????????PE\""
-ExecuteDebuggerCommand command = "findmemall 0x00400000 \"C3909090\" -1 user"
+ExecuteDebuggerCommand command = "findallmem 0, 540065006e00" // Searching for the Unicode string "Ten" from the start of the application
+ExecuteDebuggerCommand command = "findmemall 0x00400000, C3909090, -1, user"
 
 findasm
 ExecuteDebuggerCommand command = findasm instruction [address] [size]
@@ -1005,8 +1005,8 @@ ExecuteDebuggerCommand command = findasm instruction [address] [size]
 Description: Find assembled instruction. Aliases: asmfind.
 Result: $result (integer) = The number of references found.
 Example:
-ExecuteDebuggerCommand command = "findasm \"call eax\""
-ExecuteDebuggerCommand command = "asmfind \"push ebp\" MyModuleBase MyModuleSize"
+ExecuteDebuggerCommand command = "findasm call eax"
+ExecuteDebuggerCommand command = "asmfind push ebp, MyModuleBase, MyModuleSize"
 
 findguid
 ExecuteDebuggerCommand command = findguid [base_address] [size] [region]
@@ -1042,46 +1042,18 @@ Example:
 ExecuteDebuggerCommand command = "reffindrange 0x00401000 0x0040FFFF"
 ExecuteDebuggerCommand command = "refrange $csp $csp+0x100 MyStackRegion MyStackSize"
 
-findconst
-ExecuteDebuggerCommand command = findconst base_address [size]
-[integer]base_address = The base address of the module to search.
-[optional integer]size = The size of the module or memory range to search.
-Description: Find all constants in the current module that are referenced in the disassembly.
-Result: $result (integer) = The number of constants found.
+refstr
+ExecuteDebuggerCommand command = refstr [address] [size]
+[optional integer]address = Address of or inside a memory page to find referenced text strings in. Defaults to the current instruction pointer (CIP) if not specified.
+[optional integer]size = The size of the data to search in. Defaults to the size of the memory region containing the 'address'.
+Description: Finds instructions/data within the specified memory range that reference (point to) potential text strings (ASCII/Unicode). Adds the addresses containing these references to the References view.
+Result: $result (integer) = The number of potential string references found.
+Aliases: strref
 Example:
-ExecuteDebuggerCommand command = "findconst MyModuleBase MyModuleSize"
+ExecuteDebuggerCommand command = "refstr" // Search the current page from CIP for string references
+ExecuteDebuggerCommand command = "refstr MyModuleBase MyModuleSize" // Search within a module's range
+ExecuteDebuggerCommand command = "strref $csp 0x1000" // Search 0x1000 bytes from current stack pointer
 
-findimport
-ExecuteDebuggerCommand command = findimport dll_name function_name
-[string]dll_name = The name of the DLL (e.g., 'kernel32.dll').
-[string]function_name = The name of the imported function (e.g., 'CreateFileW').
-Description: Find references to imported functions by name.
-Result: $result (integer) = The number of references to the imported function found.
-Example:
-ExecuteDebuggerCommand command = "findimport user32.dll MessageBoxA"
-ExecuteDebuggerCommand command = "findimport ntdll.dll NtQueryInformationProcess"
-
-findunicode
-ExecuteDebuggerCommand command = findunicode string [base_address] [size]
-[string]string = The Unicode string to search for. Enclose it in quotes.
-[optional integer]base_address = Starting address for the search.
-[optional integer]size = Size of the memory region to search.
-Description: Search for a Unicode string in memory.
-Result: $result (integer) = Number of matches found.
-Example:
-ExecuteDebuggerCommand command = "findunicode \"Registry Key\""
-ExecuteDebuggerCommand command = "findunicode \"Complete\" 0x00400000 0x100000"
-
-findascii
-ExecuteDebuggerCommand command = findascii string [base_address] [size]
-[string]string = The ASCII string to search for. Enclose it in quotes.
-[optional integer]base_address = Starting address for the search.
-[optional integer]size = Size of the memory region to search.
-Description: Search for an ASCII string in memory.
-Result: $result (integer) = Number of matches found.
-Example:
-ExecuteDebuggerCommand command = "findascii \"Copyright\""
-ExecuteDebuggerCommand command = "findascii \"Error:\" MyModuleBase MyModuleSize"
 </value>
   </data>
   <data name="SearchJSON" xml:space="preserve">
