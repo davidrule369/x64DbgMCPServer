@@ -71,7 +71,7 @@ These commands return JSON or text-formatted output that’s suitable for ingest
 
 ## Debugging
 DotNetPlugin.Impl contains the following within the project build post commands. Update it to reflect the corret path to x64dbg for faster debugging:
-xcopy /Y /I "$(TargetDir)*.*" "C:\Users\User\Desktop\x96\release\x64\plugins\"
+xcopy /Y /I "$(TargetDir)*.*" "C:\Users\User\Desktop\x96\release\x64\plugins\x64DbgMCPServer"
 C:\Users\User\Desktop\x96\release\x64\x64dbg.exe
 
 ## Actively working on implementing several functions
