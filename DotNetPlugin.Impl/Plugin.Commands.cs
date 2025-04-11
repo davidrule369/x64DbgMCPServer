@@ -14,7 +14,6 @@ using DotNetPlugin.NativeBindings;
 using DotNetPlugin.NativeBindings.Script;
 using DotNetPlugin.NativeBindings.SDK;
 using DotNetPlugin.Properties;
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
 using static DotNetPlugin.NativeBindings.SDK.Bridge;
