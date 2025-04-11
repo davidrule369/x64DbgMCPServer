@@ -40,8 +40,10 @@ Clone or fork the project: git clone https://github.com/AgentSmithers/x64DbgMCPS
 
 Open the solution and build.
 
-copy the files (DotNetPluginCS\bin\x64\Debug) into the x64DBG plugin (x96\release\x64\plugins) folder to run
-![image](https://github.com/user-attachments/assets/d307d3e0-4215-4fc4-a702-a9fd814703ac)
+copy the files (x64DbgMCPServer\bin\x64\Debug) into the x64DBG plugin (x96\release\x64\plugins\x64DbgMCPServer) folder to run
+![image](https://github.com/user-attachments/assets/8511452e-b65c-4bc8-83ff-885c384d0bbe)
+
+Sample Debug log when loaded
 ![image](https://github.com/user-attachments/assets/02eb35d8-8584-46de-83c6-b535d23976b9)
 
 Start the Debugger, goto plugins -> Click "Start MCP Server"
