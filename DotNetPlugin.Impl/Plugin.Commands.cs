@@ -154,12 +154,17 @@ namespace DotNetPlugin
         }
 
         [Command("DbgValFromString", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: DbgValFromString value=$pid")]
-        public static nuint DbgValFromString(string value)// = "$hProcess"
+        public static string DbgValFromString(string value)// = "$hProcess"
+        {
+            Console.WriteLine("Executing DbgValFromString: " + value);
+            return "0x" + Bridge.DbgValFromString(value).ToHexString();
+        }
+        public static nuint DbgValFromStringAsNUInt(string value)// = "$hProcess"
         {
             Console.WriteLine("Executing DbgValFromString: " + value);
             return Bridge.DbgValFromString(value);
         }
-        
+
 
         [Command("ExecuteDebuggerCommandDirect", DebugOnly = false)]
         public static bool ExecuteDebuggerCommandDirect(string[] args)
@@ -943,8 +948,8 @@ namespace DotNetPlugin
 
             // Get initial stack pointers from the debugger
             // Ensure DbgValFromString is correctly implemented via P/Invoke
-            nuint rbp = DbgValFromString("rbp");
-            nuint rsp = DbgValFromString("rsp");
+            nuint rbp = DbgValFromStringAsNUInt("rbp");
+            nuint rsp = DbgValFromStringAsNUInt("rsp");
             nuint currentRbp = rbp;
             nuint previousRbp = 0; // To calculate frame size
 
