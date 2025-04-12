@@ -17,6 +17,8 @@ Hit start debug on the client and the AI should automatically execute the Prompt
 
 ![image](https://github.com/user-attachments/assets/ebf2ad81-0672-4ceb-be6e-a44c625cd6d0)
 
+Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
+
 ## Features
 ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
 ✅ Lightweight, zero-dependency binary deployment
