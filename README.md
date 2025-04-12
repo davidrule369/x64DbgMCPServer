@@ -32,6 +32,9 @@ Access the latest sample client to use as a starting point of integration with t
 ### AI Tasked with loading a file, counting the internal modules and begin labeling important material functions.
 https://github.com/AgentSmithers/x64DbgMCPServer/blob/master/Sample1
 
+### Singleshot Speedhack identification
+https://github.com/AgentSmithers/x64DbgMCPServer/blob/master/Sample2
+
 ## Prerequisites
 To build and run this project, you'll need:
 Visual Studio Build Tools (2019 v16.7 or later)
