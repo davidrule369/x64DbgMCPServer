@@ -20,6 +20,7 @@ Hit start debug on the client and the AI should automatically execute the Prompt
 Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
 ## Features
+✅ Cursor and MCP client compatible
 ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
 ✅ Lightweight, zero-dependency binary deployment
 ✅ Modular commands with parameter mapping
@@ -27,6 +28,8 @@ Access the latest sample client to use as a starting point of integration with t
 ✅ Bi-directional AI/LLM command support
 ✅ Plugin reload without restarting x64dbg
 ✅ Expression function and menu extension support
+
+![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
 
 ## Sample Conversations:
 ### AI Tasked with loading a file, counting the internal modules and begin labeling important material functions.
@@ -90,6 +93,7 @@ The MCP server runs a simple HTTP listener and routes incoming commands to C# me
 
 ## Known Issues
 ExecuteDebuggerCommand always returns true as it pertains to the comment successfully being execute and not the results of the actual command.
+Currently the already compiled version is set to listen on all IP's on port 3001 thus requiring Administrative privileges. Future releases will look to detect this and will listen only on 127.0.0.1 so it may be used without administrative privileges.
 
 ## Special thanks
 ⚡ With the help of DotNetPluginCS by Adams85. That and roughly ~20 hours of focused coding, MCP Protocol review resulted in a decent proof-of-concept self-contained HTTP MCP server plugin for x64dbg.
