@@ -36,9 +36,6 @@ Cursor Connection:
   "mcpServers": {
     "AgentSmithers X64Dbg MCP Server": {
       "url": "http://127.0.0.1:3001/sse",
-      "env": {
-        "API_KEY": "value"
-      }
     }
   }
 }
