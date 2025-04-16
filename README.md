@@ -20,25 +20,27 @@ Hit start debug on the client and the AI should automatically execute the Prompt
 Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
 ## Features
-✅ Cursor and MCP client compatible for quick ease of use
-✅ Self-hosted HTTP command interface (no ASP.NET Core required)
-✅ Lightweight, zero-dependency binary deployment
-✅ Modular commands with parameter mapping
-✅ Direct interaction with registers, memory, threads, disassembly
-✅ Bi-directional AI/LLM command support
-✅ Plugin reload without restarting x64dbg
-✅ Expression function and menu extension support
+* ✅ Cursor and MCP client compatible for quick ease of use
+* ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
+* ✅ Lightweight, zero-dependency binary deployment
+* ✅ Modular commands with parameter mapping
+* ✅ Direct interaction with registers, memory, threads, disassembly
+* ✅ Bi-directional AI/LLM command support
+* ✅ Plugin reload without restarting x64dbg
+* ✅ Expression function and menu extension support
 
 ![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
 
 Cursor Connection:
+```json
 {
   "mcpServers": {
     "AgentSmithers X64Dbg MCP Server": {
-      "url": "http://127.0.0.1:3001/sse",
+      "url": "http://127.0.0.1:3001/sse"
     }
   }
 }
+```
 ![image](https://github.com/user-attachments/assets/22414a30-d41e-4c3d-9b4f-f168f0498736)
 
 ## Sample Conversations:
