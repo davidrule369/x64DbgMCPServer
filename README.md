@@ -15,7 +15,7 @@ Open your x96 debugger, your logs should reflect that the server automatically l
 To interact with the server by hand instead of using the AI, uncomment line 634 and comment out line 635.
 Hit start debug on the client and the AI should automatically execute the Prompt located on line 434 (Program.cs)
 
-![image](https://github.com/user-attachments/assets/ebf2ad81-0672-4ceb-be6e-a44c625cd6d0)
+![image](https://github.com/user-attachments/assets/4b3c3a02-edc0-48e2-93eb-a8c1727b5017)
 
 Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
