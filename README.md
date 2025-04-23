@@ -6,9 +6,6 @@ The plugin acts as a lightweight HTTP interface bridge between an MCP client and
 On top of essential bindings to the x64dbg debugger engine, this template offers a clean project structure, a built-in command system, and a simple HTTP listener that exposes your commands through a text-based API. 
 ![image](https://github.com/user-attachments/assets/4b3c3a02-edc0-48e2-93eb-a8c1727b5017)
 
-## X64Dbg MCP Client - Need a client to sample the project?
-Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
-
 ## Features
 * ✅ Cursor and MCP client compatible for quick ease of use
 * ✅ Self-hosted HTTP command interface (no ASP.NET Core required)
@@ -18,6 +15,9 @@ Access the latest sample client to use as a starting point of integration with t
 * ✅ Bi-directional AI/LLM command support
 * ✅ Plugin reload without restarting x64dbg
 * ✅ Expression function and menu extension support
+* 
+## X64Dbg MCP Client - Need a client to sample the project?
+Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
 ## Cursor Support
 Cursor Connection:
