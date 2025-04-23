@@ -58,7 +58,7 @@ Claude Configuration Connection:
 ```
 {
   "mcpServers": {
-    "AgentSmithers x64Dbg STDIO to SSE": {
+    "AgentSmithers x64Dbg STDIO<->SSE": {
       "command": "C:\\MCPProxy-STDIO-to-SSE.exe",
       "args": ["http://localhost:3001"]
     }
