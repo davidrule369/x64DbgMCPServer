@@ -15,7 +15,7 @@ On top of essential bindings to the x64dbg debugger engine, this template offers
 * ✅ Bi-directional AI/LLM command support
 * ✅ Plugin reload without restarting x64dbg
 * ✅ Expression function and menu extension support
-* 
+  
 ## X64Dbg MCP Client - Need a client to sample the project?
 Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
