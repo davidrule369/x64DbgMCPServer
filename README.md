@@ -4,20 +4,7 @@ This project is a starting point for building an MCP (Memory Command Protocol) s
 The plugin acts as a lightweight HTTP interface bridge between an MCP client and the debugger, allowing you to have an LLM MCP client interactively send commands to inspect memory, disassemble, query registers, manipulate labels/comments, and more—all remotely and programmatically.
 
 On top of essential bindings to the x64dbg debugger engine, this template offers a clean project structure, a built-in command system, and a simple HTTP listener that exposes your commands through a text-based API. 
-
-# X64Dbg MCP Client - Need a client to sample?
-[mcp-csharp-sdk-client.zip](https://github.com/user-attachments/files/19697365/mcp-csharp-sdk-client.zip)
-
-Open the project
-Edit line 590 in Program.cs and enter your GeminiAI key from Google Cloud API.
-Edit line 615 in Program.cs and enter in your MCP Server IP: Location = "http://192.168.x.x:3001/sse",
-Open your x96 debugger, your logs should reflect that the server automatically loaded.
-To interact with the server by hand instead of using the AI, uncomment line 634 and comment out line 635.
-Hit start debug on the client and the AI should automatically execute the Prompt located on line 434 (Program.cs)
-
 ![image](https://github.com/user-attachments/assets/4b3c3a02-edc0-48e2-93eb-a8c1727b5017)
-
-Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
 ## Features
 * ✅ Cursor and MCP client compatible for quick ease of use
@@ -29,8 +16,7 @@ Access the latest sample client to use as a starting point of integration with t
 * ✅ Plugin reload without restarting x64dbg
 * ✅ Expression function and menu extension support
 
-![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
-
+## Cursor Support
 Cursor Connection:
 ```json
 {
@@ -42,6 +28,28 @@ Cursor Connection:
 }
 ```
 ![image](https://github.com/user-attachments/assets/22414a30-d41e-4c3d-9b4f-f168f0498736)
+
+![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
+
+## Claude Desktop support
+
+### MCPProxy STIDO<->SSE Bridge required: https://github.com/AgentSmithers/MCPProxy-STDIO-to-SSE/tree/master
+Claude Configuration Connection:
+```
+{
+  "mcpServers": {
+    "x64Dbg": {
+      "command": "C:\\MCPProxy-STDIO-to-SSE.exe",
+      "args": ["http://localhost:3001"]
+    }
+  }
+}
+```
+![image](https://github.com/user-attachments/assets/0b089015-2270-4b39-ae23-42ce4322ba75)
+
+
+![image](https://github.com/user-attachments/assets/3ef4cb69-0640-4ea0-b313-d007cdb003a8)
+
 
 ## Sample Conversations:
 ### AI Tasked with loading a file, counting the internal modules and begin labeling important material functions.
@@ -71,7 +79,10 @@ Start the Debugger, goto plugins -> Click "Start MCP Server"
 
 Connect to it with your prefered MCP Client on port 3001 via SSE.
 
-## Sample Commands
+## X64Dbg MCP Client - Need a client to sample the project?
+Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
+
+### Sample Commands using the X64Dbg MCP Client
 I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
 Once the MCP server is running (via the plugin menu in x64dbg), you can issue commands like:
 ```
@@ -93,10 +104,12 @@ These commands return JSON or text-formatted output that’s suitable for ingest
 ![image](https://github.com/user-attachments/assets/2952e4eb-76ef-460c-9124-0e3c1167fa3d)
 
 ## Debugging
-DotNetPlugin.Impl contains the following within the project build post commands. Update it to reflect the corret path to x64dbg for faster debugging:
+DotNetPlugin.Impl contains the following within the project build post commands. Update it to reflect the corret path to x64dbg for faster debugging.
+Upon rebuilding X64Dbg will autoload the new plugin and you can reattach to the X64Dbg instance if needed.
+```
 xcopy /Y /I "$(TargetDir)*.*" "C:\Users\User\Desktop\x96\release\x64\plugins\x64DbgMCPServer"
 C:\Users\User\Desktop\x96\release\x64\x64dbg.exe
-
+```
 ## Actively working on implementing several functions
 Not every command is fully implemented althrough I am actively working on getting this project moving to support full stack, thread and module dumps for the AI to query.
 
