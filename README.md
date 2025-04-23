@@ -15,9 +15,6 @@ On top of essential bindings to the x64dbg debugger engine, this template offers
 * ✅ Bi-directional AI/LLM command support
 * ✅ Plugin reload without restarting x64dbg
 * ✅ Expression function and menu extension support
-  
-## X64Dbg MCP Client - Need a client to sample the project?
-Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
 
 ## Cursor Support
 Cursor Connection:
@@ -82,7 +79,10 @@ Start the Debugger, goto plugins -> Click "Start MCP Server"
 
 Connect to it with your prefered MCP Client on port 3001 via SSE.
 
-## Sample Commands
+## X64Dbg MCP Client - Need a client to sample the project?
+Access the latest sample client to use as a starting point of integration with this project: https://github.com/AgentSmithers/mcp-csharp-sdk-client/
+
+### Sample Commands using the X64Dbg MCP Client
 I’ve validated several commands already and they are working wonders. I’m especially excited to be using this system to explore how AI-assisted reverse engineering could streamline security workflows.
 Once the MCP server is running (via the plugin menu in x64dbg), you can issue commands like:
 ```
