@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DotNetPlugin.NativeBindings;
 using DotNetPlugin.NativeBindings.SDK;
+using DotNetPlugin.NativeBindings.Win32;
 
 namespace DotNetPlugin
 {
@@ -35,7 +36,7 @@ namespace DotNetPlugin
             var modInfo = info.modInfo;
             string DebugFileName = info.DebugFileName.GetValue();
             var fdProcessInfo = info.fdProcessInfo;
-            LogInfo($"Create process {info.DebugFileName}");
+            LogInfo($"Create process {DebugFileName}");
         }
 
         [EventCallback(Plugins.CBTYPE.CB_LOADDLL)]
@@ -50,48 +51,68 @@ namespace DotNetPlugin
         [EventCallback(Plugins.CBTYPE.CB_DEBUGEVENT)]
         public static void DebugEvent(ref Plugins.PLUG_CB_DEBUGEVENT info)
         {
-            LogInfo($"DebugEvent callback received.");
-
             // *** Replace 'PointerToTheStringField' with the actual field name ***
-            IntPtr stringPointer = info.DebugEvent.Value.u.DebugString.lpDebugStringData;
-            string? retrievedString = null;
+            //Debug.WriteLine(info.DebugEvent.Value.dwDebugEventCode.ToString());
+            /*
+                CREATE_THREAD_DEBUG_EVENT
+                LOAD_DLL_DEBUG_EVENT
+                EXCEPTION_DEBUG_EVENT
+                EXIT_THREAD_DEBUG_EVENT
+                EXIT_PROCESS_DEBUG_EVENT
+                CREATE_PROCESS_DEBUG_EVENT
+             */
 
-            if (stringPointer != IntPtr.Zero)
+            if (info.DebugEvent.Value.dwDebugEventCode == DebugEventType.OUTPUT_DEBUG_STRING_EVENT)//DebugEventCode.OUTPUT_DEBUG_STRING_EVENT
             {
-                try
+                IntPtr stringPointer = info.DebugEvent.Value.u.DebugString.lpDebugStringData;
+                if (stringPointer != IntPtr.Zero)
                 {
-                    if (info.DebugEvent.Value.u.DebugString.fUnicode != 0) // Non-zero means Unicode (UTF-16)
+                    try
                     {
-                        // Reads until the first null character (\0\0 for UTF-16)
-                        LogInfo(Marshal.PtrToStringUni(stringPointer) ?? string.Empty);
+                        if (info.DebugEvent.Value.u.DebugString.fUnicode != 0) // Non-zero means Unicode (UTF-16)
+                        {
+                            // Reads until the first null character (\0\0 for UTF-16)
+                            LogInfo(Marshal.PtrToStringUni(stringPointer) ?? string.Empty);
+                        }
+                        else // Zero means ANSI
+                        {
+                            // Reads until the first null character (\0)
+                            LogInfo(Marshal.PtrToStringAnsi(stringPointer) ?? string.Empty);
+                        }
                     }
-                    else // Zero means ANSI
+                    catch (AccessViolationException accEx)
                     {
-                        // Reads until the first null character (\0)
-                        LogInfo(Marshal.PtrToStringAnsi(stringPointer) ?? string.Empty);
+                        LogInfo($"Error: Access Violation trying to read string from pointer {stringPointer}. Check if pointer is valid. {accEx.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogInfo($"Error marshalling string from pointer {stringPointer}: {ex.Message}");
                     }
                 }
-                catch (AccessViolationException accEx)
+                else
                 {
-                    LogInfo($"Error: Access Violation trying to read string from pointer {stringPointer}. Check if pointer is valid. {accEx.Message}");
-                }
-                catch (Exception ex)
-                {
-                    LogInfo($"Error marshalling string from pointer {stringPointer}: {ex.Message}");
+                    LogInfo("The relevant string pointer in PLUG_CB_DEBUGEVENT is null (IntPtr.Zero).");
                 }
             }
-            else
-            {
-                LogInfo("The relevant string pointer in PLUG_CB_DEBUGEVENT is null (IntPtr.Zero).");
-            }
-
             // You can add more processing for other parts of the 'info' struct here
         }
 
         [EventCallback(Plugins.CBTYPE.CB_OUTPUTDEBUGSTRING)]
         public static void OutputDebugString(ref Plugins.PLUG_CB_OUTPUTDEBUGSTRING info)
         {
-            LogInfo($"Load DLL ");
+            LogInfo($"OutputDebugString ");
+        }
+
+        [EventCallback(Plugins.CBTYPE.CB_BREAKPOINT)]
+        public static void Breakpoint(ref Plugins.PLUG_CB_BREAKPOINT info)
+        {
+            LogInfo($"Breakpoint " + info.breakpoint.Value.addr.ToHexString() + " in " + info.breakpoint.Value.mod);
+        }
+
+        [EventCallback(Plugins.CBTYPE.CB_SYSTEMBREAKPOINT)]
+        public static void SystemBreakpoint(ref Plugins.PLUG_CB_SYSTEMBREAKPOINT info)
+        {
+            LogInfo($"SystemBreakpoint " + info.reserved);
         }
     }
 }

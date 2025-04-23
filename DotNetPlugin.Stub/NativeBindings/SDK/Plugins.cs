@@ -502,11 +502,84 @@ namespace DotNetPlugin.NativeBindings.SDK
             public StructRef<EXCEPTION_DEBUG_INFO> Exception => new StructRef<EXCEPTION_DEBUG_INFO>(ExceptionPtr);
         }
 
+        public static class BridgeBpConstants
+        {
+            public const int MAX_BREAKPOINT_SIZE = 256;
+            public const int MAX_MODULE_SIZE = 256;
+            public const int MAX_CONDITIONAL_EXPR_SIZE = 256;
+            public const int MAX_CONDITIONAL_TEXT_SIZE = 256;
+        }
+        [Flags]
+        public enum BPXTYPE : uint
+        {
+            None = 0,
+            Normal = 1,
+            Hardware = 2,
+            Memory = 4,
+            Dll = 8,
+            Exception = 16
+        }
+
+        [Serializable]
+        public struct BRIDGEBP
+        {
+            public BPXTYPE type;
+            public IntPtr addr;         // duint
+            //public StructRef<BREAKPOINT> breakpoint => new StructRef<BREAKPOINT>(addr);
+
+            [MarshalAs(UnmanagedType.I1)]
+            public bool enabled;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool singleshoot;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool active;
+
+            // fixed-size ANSI buffers
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_BREAKPOINT_SIZE)]
+            public string name;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_MODULE_SIZE)]
+            public string mod;
+
+            public ushort slot;
+
+            // extended part
+            public byte typeEx;      // BPHWTYPE / BPMEMTYPE / BPDLLTYPE / BPEXTYPE
+            public byte hwSize;      // BPHWSIZE
+            public uint hitCount;
+
+            [MarshalAs(UnmanagedType.I1)]
+            public bool fastResume;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool silent;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_CONDITIONAL_EXPR_SIZE)]
+            public string breakCondition;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_CONDITIONAL_TEXT_SIZE)]
+            public string logText;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_CONDITIONAL_EXPR_SIZE)]
+            public string logCondition;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_CONDITIONAL_TEXT_SIZE)]
+            public string commandText;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = BridgeBpConstants.MAX_CONDITIONAL_EXPR_SIZE)]
+            public string commandCondition;
+        }
+
+        //[Serializable]
+        //public struct BREAKPOINT
+        //{
+        //    public UIntPtr lpBREAKPOINT;
+        //}
+
         [Serializable]
         public struct PLUG_CB_BREAKPOINT
         {
-            // TODO: add definition for struct BRIDGEBP
-            public IntPtr breakpoint;
+            public IntPtr breakpointptr;
+            public BRIDGEBP? breakpoint => breakpointptr.ToStruct<BRIDGEBP>();
         }
 
         [Serializable]

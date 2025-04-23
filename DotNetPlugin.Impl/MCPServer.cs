@@ -14,7 +14,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
-
+//https://modelcontextprotocol.io/docs/concepts/prompts
 namespace DotNetPlugin
 {
     class SimpleMcpServer
