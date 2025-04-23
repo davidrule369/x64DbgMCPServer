@@ -46,7 +46,7 @@ Cursor Connection:
 
 ## Claude Desktop support
 
-# MCPProxy STIDO<->SSE Bridge required: https://github.com/AgentSmithers/MCPProxy-STDIO-to-SSE/tree/master
+### MCPProxy STIDO<->SSE Bridge required: https://github.com/AgentSmithers/MCPProxy-STDIO-to-SSE/tree/master
 Claude Configuration Connection:
 ```
 {
