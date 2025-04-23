@@ -29,6 +29,8 @@ Access the latest sample client to use as a starting point of integration with t
 * ✅ Plugin reload without restarting x64dbg
 * ✅ Expression function and menu extension support
 
+##Cursor Support
+
 ![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
 
 Cursor Connection:
@@ -42,6 +44,23 @@ Cursor Connection:
 }
 ```
 ![image](https://github.com/user-attachments/assets/22414a30-d41e-4c3d-9b4f-f168f0498736)
+
+##Claude Desktop support
+
+Claude Configuration Connection:
+```
+{
+  "mcpServers": {
+    "x64Dbg": {
+      "command": "C:\\MCPProxy-STDIO-to-SSE\\MCPProxy-STDIO-to-SSE\\bin\\Debug\\net6.0\\MCPProxy-STDIO-to-SSE.exe",
+      "args": ["http://localhost:3001"],
+    }
+  }
+}
+```
+
+![image](https://github.com/user-attachments/assets/3ef4cb69-0640-4ea0-b313-d007cdb003a8)
+
 
 ## Sample Conversations:
 ### AI Tasked with loading a file, counting the internal modules and begin labeling important material functions.
