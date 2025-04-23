@@ -29,10 +29,7 @@ Access the latest sample client to use as a starting point of integration with t
 * ✅ Plugin reload without restarting x64dbg
 * ✅ Expression function and menu extension support
 
-##Cursor Support
-
-![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
-
+## Cursor Support
 Cursor Connection:
 ```json
 {
@@ -45,9 +42,11 @@ Cursor Connection:
 ```
 ![image](https://github.com/user-attachments/assets/22414a30-d41e-4c3d-9b4f-f168f0498736)
 
-##Claude Desktop support
+![image](https://github.com/user-attachments/assets/53ba58e6-c97c-4c31-b57c-832951244951)
 
-#MCPProxy STIDO<->SSE Bridge required: https://github.com/AgentSmithers/MCPProxy-STDIO-to-SSE/tree/master
+## Claude Desktop support
+
+# MCPProxy STIDO<->SSE Bridge required: https://github.com/AgentSmithers/MCPProxy-STDIO-to-SSE/tree/master
 Claude Configuration Connection:
 ```
 {
