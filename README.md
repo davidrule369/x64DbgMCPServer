@@ -52,12 +52,14 @@ Claude Configuration Connection:
 {
   "mcpServers": {
     "x64Dbg": {
-      "command": "C:\\MCPProxy-STDIO-to-SSE\\MCPProxy-STDIO-to-SSE\\bin\\Debug\\net6.0\\MCPProxy-STDIO-to-SSE.exe",
-      "args": ["http://localhost:3001"],
+      "command": "C:\\MCPProxy-STDIO-to-SSE.exe",
+      "args": ["http://localhost:3001"]
     }
   }
 }
 ```
+![image](https://github.com/user-attachments/assets/0b089015-2270-4b39-ae23-42ce4322ba75)
+
 
 ![image](https://github.com/user-attachments/assets/3ef4cb69-0640-4ea0-b313-d007cdb003a8)
 
