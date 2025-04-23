@@ -14,9 +14,9 @@ namespace DotNetPlugin
     public class CommandAttribute : Attribute
     {
         public string Name { get; }
-
-        public bool DebugOnly { get; set; }
-        public bool MCPOnly { get; set; }
+        public bool DebugOnly { get; set; } //Command is only visual during an active debug session of a binary.
+        public bool MCPOnly { get; set; } //Used so it is not registered as an X64Dbg Command
+        public bool X64DbgOnly { get; set; } //Used so it is not registerd with MCP
         public string MCPCmdDescription { get; set; }
 
         public CommandAttribute() { }

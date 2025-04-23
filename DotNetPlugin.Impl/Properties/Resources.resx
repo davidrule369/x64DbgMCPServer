@@ -132,8 +132,8 @@ ExecuteDebuggerCommand command = InitDebug executable_path [command_line] [curre
 Description: Initializes the debugger by loading the specified executable, performing basic checks, setting breakpoints on TLS callbacks (if present), and at the process entry point. It breaks at the system breakpoint before returning control to the user. Aliases: initdbg, init.
 Result: Sets the process ID ($pid) and process handle ($hp, $hProcess) variables.
 Example:
-ExecuteDebuggerCommand command = "InitDebug C:\Program Files\MyApp\MyApp.exe"
-ExecuteDebuggerCommand command = "init notepad.exe,C:\MyLog.txt,C:\Temp"
+ExecuteDebuggerCommand command = InitDebug "D:\My Path with a space in it\MyProgram.exe" //Folder with spaces in the path
+ExecuteDebuggerCommand command = "init notepad.exe,C:\MyLog.txt,C:\Temp" //With Arguments
 Return: True/False
 Note: If the return value is True, then the command executed successfully, however, a subsequent check for the processes PID will need to be ran to confirm if a valid process has executed. To confirm, check if the return value of 'DbgValFromString value=$pid' is greater than zero.
 Note: Do not escape out special characters when executing Init/InitDebug
@@ -313,6 +313,8 @@ Description: Enables or disables breakpoints on TLS callback functions.
 Example:
 ExecuteDebuggerCommand command = "SetTlsBreak 1"
 ExecuteDebuggerCommand command = "SetTlsBreak 0"
+
+
 
 </value>
   </data>

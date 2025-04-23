@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using DotNetPlugin.NativeBindings;
 using DotNetPlugin.NativeBindings.SDK;
 
@@ -8,17 +9,20 @@ namespace DotNetPlugin
 {
     partial class Plugin
     {
+
         [EventCallback(Plugins.CBTYPE.CB_INITDEBUG)]
         public static void OnInitDebug(ref Plugins.PLUG_CB_INITDEBUG info)
         {
-            var szFileName = info.szFileName;
-            LogInfo($"DotNet test debugging of file {szFileName} started!");
+            var szFileName = info.szFileName.GetValue();
+            LogInfo($"debugging of file {szFileName} started!");
+            GSimpleMcpServer.IsActivelyDebugging = true;
         }
 
         [EventCallback(Plugins.CBTYPE.CB_STOPDEBUG)]
         public static void OnStopDebug(ref Plugins.PLUG_CB_STOPDEBUG info)
         {
-            LogInfo($"DotNet test debugging stopped!");
+            LogInfo($"debugging stopped!");
+            GSimpleMcpServer.IsActivelyDebugging = false;
         }
 
         [EventCallback(Plugins.CBTYPE.CB_CREATEPROCESS)]
@@ -29,7 +33,7 @@ namespace DotNetPlugin
 
             var CreateProcessInfo = info.CreateProcessInfo;
             var modInfo = info.modInfo;
-            string DebugFileName = info.DebugFileName;
+            string DebugFileName = info.DebugFileName.GetValue();
             var fdProcessInfo = info.fdProcessInfo;
             LogInfo($"Create process {info.DebugFileName}");
         }
@@ -39,7 +43,7 @@ namespace DotNetPlugin
         {
             var LoadDll = info.LoadDll;
             var modInfo = info.modInfo;
-            string modname = info.modname;
+            string modname = info.modname.GetValue();
             LogInfo($"Load DLL {modname}");
         }
 
@@ -56,27 +60,15 @@ namespace DotNetPlugin
             {
                 try
                 {
-                    // Try reading as an ANSI string (common for C/C++ interop)
-                    retrievedString = Marshal.PtrToStringAnsi(stringPointer);
-
-                    // --- OR ---
-
-                    // If you know it's a Unicode (UTF-16) string (common in Windows API)
-                    // retrievedString = Marshal.PtrToStringUni(stringPointer);
-
-                    // --- OR ---
-
-                    // If you know it's a UTF-8 string (less common for basic C strings in Win)
-                    // retrievedString = Marshal.PtrToStringUTF8(stringPointer);
-
-                    if (!string.IsNullOrEmpty(retrievedString))
+                    if (info.DebugEvent.Value.u.DebugString.fUnicode != 0) // Non-zero means Unicode (UTF-16)
                     {
-                        LogInfo($"Successfully retrieved string from IntPtr: '{retrievedString}'");
-                        // Now you can use the 'retrievedString' variable
+                        // Reads until the first null character (\0\0 for UTF-16)
+                        LogInfo(Marshal.PtrToStringUni(stringPointer) ?? string.Empty);
                     }
-                    else
+                    else // Zero means ANSI
                     {
-                        LogInfo($"Pointer {stringPointer} did not point to a valid readable string (or it was empty).");
+                        // Reads until the first null character (\0)
+                        LogInfo(Marshal.PtrToStringAnsi(stringPointer) ?? string.Empty);
                     }
                 }
                 catch (AccessViolationException accEx)

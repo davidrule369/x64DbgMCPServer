@@ -22,6 +22,8 @@ namespace DotNetPlugin
 {
     partial class Plugin
     {
+
+        //Commmand Toolnames should be ^[a-zA-Z0-9_-]{1,64}$
         //[Command("DotNetpluginTestCommand")]
         public static void cbNetTestCommand(string[] args)
         {
@@ -87,22 +89,49 @@ namespace DotNetPlugin
 
         static SimpleMcpServer GSimpleMcpServer;
 
-        [Command("StartMCPServer", DebugOnly = false)]
+        [Command("StartMCPServer", X64DbgOnly = true ,DebugOnly = false)]
         public static void cbStartMCPServer(string[] args)
         {
-            Console.WriteLine("Starting MCPServer");
-            GSimpleMcpServer = new SimpleMcpServer(typeof(DotNetPlugin.Plugin));
-            GSimpleMcpServer.Start();
-            Console.WriteLine("MCPServer Started");
+            // --- Check if already initialized ---
+            if (GSimpleMcpServer != null)
+            {
+                Console.WriteLine("MCPServer instance already exists. Start command ignored.");
+                return; // Don't create a new one
+            }
+            Console.WriteLine("Starting MCPServer...");
+            try
+            {
+                // Create new instance and assign it to the static field
+                GSimpleMcpServer = new SimpleMcpServer(typeof(DotNetPlugin.Plugin));
+                GSimpleMcpServer.Start(); // Start the newly created server
+                Console.WriteLine("MCPServer Started.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to start MCPServer: {ex.Message}");
+                GSimpleMcpServer = null;
+            }
         }
 
-        [Command("StopMCPServer", DebugOnly = false)]
+        [Command("StopMCPServer", X64DbgOnly = true, DebugOnly = false)]
         public static void cbStopMCPServer(string[] args)
         {
-            Console.WriteLine("Stopping MCPServer");
-            GSimpleMcpServer.Stop();
-            GSimpleMcpServer = null;
-            Console.WriteLine("MCPServer Stopped");
+            if (GSimpleMcpServer == null)
+            {
+                Console.WriteLine("MCPServer instance not found (already stopped or never started). Stop command ignored.");
+                return; // Nothing to stop
+            }
+            Console.WriteLine("Stopping MCPServer...");
+            try
+            {
+                GSimpleMcpServer.Stop();
+                GSimpleMcpServer = null;
+                Console.WriteLine("MCPServer Stopped.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error stopping MCPServer: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -118,7 +147,7 @@ namespace DotNetPlugin
         /// </summary>
         /// <param name="command">The debugger command string to execute.</param>
         /// <returns>True if the command executed successfully, false otherwise.</returns>
-        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe\r\nNote: See ListDebuggerCommands for list of applicable commands.")]
+        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe\r\nNote: See ListDebuggerCommands for list of applicable commands. Once a program is loaded new available functions can be viewed from the tools/list")]
         public static bool ExecuteDebuggerCommand(string command)
         {
             Console.WriteLine("Executing DebuggerCommand: " + command);
