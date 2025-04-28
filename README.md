@@ -51,6 +51,24 @@ Claude Configuration Connection:
 ![image](https://github.com/user-attachments/assets/3ef4cb69-0640-4ea0-b313-d007cdb003a8)
 
 
+## Windsurf support
+
+### MCPProxy STIDO<->SSE Bridge required: https://github.com/AgentSmithers/MCPProxy-STDIO-to-SSE/tree/master
+Claude Configuration Connection:
+```
+{
+  "mcpServers": {
+    "AgentSmithers x64Dbg STDIO<->SSE": {
+      "command": "C:\\MCPProxy-STDIO-to-SSE.exe",
+      "args": ["http://localhost:3001"]
+    }
+  }
+}
+```
+![image](https://github.com/user-attachments/assets/df900c88-2291-47af-9789-1b17ff51cae9)
+
+Known: Context deadline exceeded (timeout) issue with directly using SSE.
+
 ## Sample Conversations:
 ### AI Tasked with loading a file, counting the internal modules and begin labeling important material functions.
 https://github.com/AgentSmithers/x64DbgMCPServer/blob/master/Sample1
