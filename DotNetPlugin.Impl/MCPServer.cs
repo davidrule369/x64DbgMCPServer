@@ -1,20 +1,17 @@
 ﻿using DotNetPlugin.NativeBindings.SDK;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 //https://modelcontextprotocol.io/docs/concepts/prompts
+//https://prasanthmj.github.io/ai/mcp-go/
 namespace DotNetPlugin
 {
     class SimpleMcpServer
@@ -23,21 +20,7 @@ namespace DotNetPlugin
         private readonly Dictionary<string, MethodInfo> _commands = new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase);
         private readonly Type _targetType;
         public bool IsActivelyDebugging = false;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        public bool OutputPlugingDebugInformation = true;
 
         public SimpleMcpServer(Type commandSourceType)
         {
@@ -56,6 +39,12 @@ namespace DotNetPlugin
                 if (attr != null)
                     _commands[attr.Name] = method;
             }
+        }
+
+        private void OutputDebugInforamtion()
+        {
+            if (OutputPlugingDebugInformation)
+            { }
         }
 
         private static void ExecuteCommand(string command)
@@ -567,7 +556,7 @@ namespace DotNetPlugin
                     prompts = new { }, // Indicate prompt support
                     resources = new { } // Indicate resource support
                 },
-                serverInfo = new { name = "DotNetPlugin-SimpleMcpServer", version = "1.0.0" }, // Your server details
+                serverInfo = new { name = "AgentSmithers-X64DbgMcpServer", version = "1.0.0" }, // Your server details
                 instructions = "Welcome to the .NET x64Dbg MCP Server!" // Optional instructions
             };
             SendSseResult(sessionId, id, result);
@@ -1281,15 +1270,6 @@ namespace DotNetPlugin
             }}
             // Add other resource templates here
         };
-        // --- End Additions for Prompts and Resources ---
-
-
-
-
-
-
-
-        // --- Data Structures for MCP Prompts ---
 
         public class PromptArgument
         {
@@ -1391,28 +1371,5 @@ namespace DotNetPlugin
             public string type { get; set; }
             public string text { get; set; }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 }

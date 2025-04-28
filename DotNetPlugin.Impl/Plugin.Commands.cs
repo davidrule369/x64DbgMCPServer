@@ -1451,9 +1451,9 @@ namespace DotNetPlugin
 
 
         [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: DumpModuleToFile pfilepath=C:\\Output.txt")]
-        public static void DumpModuleToFile(string[] pfilepath)
+        public static void DumpModuleToFile(string pfilepath)
         {
-            string filePath = pfilepath[0];//@"C:\dump.txt"; // Hardcoded file path as requested
+            string filePath = pfilepath;//@"C:\dump.txt"; // Hardcoded file path as requested
             Console.WriteLine($"Attempting to dump module info to: {filePath}");
 
             try
