@@ -206,7 +206,7 @@ namespace DotNetPlugin
         }
 #endif
 
-        [DllExport("pluginit", CallingConvention.Cdecl)]
+        [System.Runtime.InteropServices.DllExport("pluginit", CallingConvention.Cdecl)]
         public static bool pluginit(ref Plugins.PLUG_INITSTRUCT initStruct)
         {
             if (!TryLoadPlugin(isInitial: true))
@@ -236,7 +236,7 @@ namespace DotNetPlugin
             return true;
         }
 
-        [DllExport("plugsetup", CallingConvention.Cdecl)]
+        [System.Runtime.InteropServices.DllExport("plugsetup", CallingConvention.Cdecl)]
         private static void plugsetup(ref Plugins.PLUG_SETUPSTRUCT setupStruct)
         {
             s_setupStruct = setupStruct;
@@ -244,7 +244,7 @@ namespace DotNetPlugin
             Session.Setup(ref setupStruct);
         }
 
-        [DllExport("plugstop", CallingConvention.Cdecl)]
+        [System.Runtime.InteropServices.DllExport("plugstop", CallingConvention.Cdecl)]
         private static bool plugstop()
         {
             var success = Session.Stop();
@@ -279,7 +279,7 @@ namespace DotNetPlugin
         }
 #endif
 
-        [DllExport("CBMENUENTRY", CallingConvention.Cdecl)]
+        [System.Runtime.InteropServices.DllExport("CBMENUENTRY", CallingConvention.Cdecl)]
         public static void CBMENUENTRY(Plugins.CBTYPE cbType, ref Plugins.PLUG_CB_MENUENTRY info)
         {
             Session.OnMenuEntry(ref info);
