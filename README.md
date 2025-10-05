@@ -60,7 +60,7 @@ Connect to it with your prefered MCP Client on port 50300 via SSE.
 
 ### "Access is denied" when starting MCP server
 
-If you see `Failed to start MCP server: Access is denied` in the x64dbg logs (Alt+L), this is because Windows requires special permissions to listen on HTTP URLs. You have two options:
+If you see `Failed to start MCP server: Access is denied` in the x64dbg logs `(Alt+L)`, this is because Windows requires special permissions to listen on HTTP URLs. You have two options:
 
 **Option 1: Run as Administrator (Quick fix)**
 - Right-click `x64dbg.exe` and select "Run as administrator"
