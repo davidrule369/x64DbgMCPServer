@@ -97,8 +97,6 @@ namespace DotNetPlugin
 
         public virtual Task<bool> StopAsync() => Task.FromResult(true);
 
-        public virtual byte[] GetIcon() => null;
-
         void IPlugin.OnMenuEntry(ref Plugins.PLUG_CB_MENUENTRY info)
         {
             MenuItem menuItem;
