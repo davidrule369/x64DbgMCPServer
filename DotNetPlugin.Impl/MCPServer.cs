@@ -1,4 +1,4 @@
-using DotNetPlugin.NativeBindings.SDK;
+﻿using DotNetPlugin.NativeBindings.SDK;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -145,8 +145,22 @@ namespace DotNetPlugin
 
             try
             {
-                _listener.Stop();
+                // prevent re-arming new contexts while stopping
                 _isRunning = false;
+
+                // stop listener first to abort pending accepts
+                _listener.Stop();
+
+                // dispose any active SSE writers
+                lock (_sseSessions)
+                {
+                    foreach (var kv in _sseSessions)
+                    {
+                        try { kv.Value.Dispose(); } catch { }
+                    }
+                    _sseSessions.Clear();
+                }
+
                 Console.WriteLine("MCP server stopped.");
             }
             catch (Exception ex)
@@ -182,8 +196,28 @@ namespace DotNetPlugin
 
         private async void OnRequest(IAsyncResult ar) // Make async void for simplicity here, consider Task for robustness
         {
-            HttpListenerContext ctx = _listener.EndGetContext(ar);
-            _listener.BeginGetContext(OnRequest, null); // loop
+            HttpListenerContext ctx;
+            try
+            {
+                ctx = _listener.EndGetContext(ar);
+            }
+            catch (ObjectDisposedException)
+            {
+                return; // shutting down
+            }
+            catch (HttpListenerException)
+            {
+                return; // listener stopped or aborted
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            if (_isRunning && _listener.IsListening)
+            {
+                try { _listener.BeginGetContext(OnRequest, null); } catch { }
+            }
 
             if (pDebug)
             {
