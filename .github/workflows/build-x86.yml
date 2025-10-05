@@ -37,9 +37,9 @@ jobs:
         with:
           name: x32dbg-plugin
           path: |
-            .cache\\bin\\x86\\Release\\**\\*.dp32
-            .cache\\bin\\x86\\Release\\**\\*.dll
-            .cache\\bin\\x86\\Release\\**\\*.pdb
+            bin\\x86\\Release\\**\\*.dp32
+            bin\\x86\\Release\\**\\*.dll
+            bin\\x86\\Release\\**\\*.pdb
           if-no-files-found: error
 
       - name: Cleanup caches
