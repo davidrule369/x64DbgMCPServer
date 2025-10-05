@@ -56,6 +56,24 @@ Start the Debugger, goto plugins -> Click "Start MCP Server"
 
 Connect to it with your prefered MCP Client on port 50300 via SSE.
 
+## Troubleshooting
+
+### "Access is denied" when starting MCP server
+
+If you see `Failed to start MCP server: Access is denied` in the x64dbg logs (Alt+L), this is because Windows requires special permissions to listen on HTTP URLs. You have two options:
+
+**Option 1: Run as Administrator (Quick fix)**
+- Right-click `x64dbg.exe` and select "Run as administrator"
+
+**Option 2: Grant URL permissions (Recommended)**
+Run these commands in an elevated PowerShell/Command Prompt:
+```cmd
+netsh http add urlacl url=http://+:50300/sse/ user=Everyone
+netsh http add urlacl url=http://+:50300/message/ user=Everyone
+```
+
+After running these commands, you can start x64dbg normally and the MCP server will work.
+
 ## Applying Fixes for CI/Builds
 This repository includes helper files to apply necessary modifications for building on a clean environment (like GitHub Actions) or reapplying changes after pulling updates from the original developer.
 
