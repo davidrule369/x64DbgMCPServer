@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DotNetPlugin.NativeBindings.SDK;
 
-namespace DotNetPlugin.SDK
+namespace DotNetPlugin
 {
-    public interface IPlugin
-    {
-        void OnLoad();
-        void OnUnload();
+	/// <summary>
+	/// Defines an API to interact with x64dbg.
+	/// </summary>
+	internal interface IPlugin
+	{
+		int PluginHandle { get; }
 
-        void SetupMenu(IMenuBuilder menu);
-        void OnMenu(int id);
-        byte[] GetIcon();
-    }
+		bool Init();
+		void Setup(ref Plugins.PLUG_SETUPSTRUCT setupStruct);
+		bool Stop();
+
+		void OnMenuEntry(ref Plugins.PLUG_CB_MENUENTRY info);
+	}
 }
