@@ -23,6 +23,7 @@ namespace DotNetPlugin
         public bool IsActivelyDebugging
         {
             get { return Bridge.DbgIsDebugging(); }
+            set { /* accept assignments from event callbacks; actual state comes from Bridge */ }
         }
 
         public SimpleMcpServer(Type commandSourceType)
