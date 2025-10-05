@@ -1,0 +1,47 @@
+Goal: Ensure the x32 and x64 builds succeed on CI and produce .dp32/.dp64 artifacts for x32dbg/x64dbg.
+
+Edits to apply (idempotent):
+
+1) DotNetPlugin.Impl/DotNetPlugin.Impl.csproj
+   - Why: Copy built plugin files to the correct x96dbg plugin folders depending on platform; avoid CI failures if local path missing.
+   - What: Ensure a PostBuild target exists exactly like this:
+
+      <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <!-- You can update the path to x96dbg here -->
+        <PropertyGroup>
+          <X96DbgRootPath>C:\Users\User\Desktop\x96\release</X96DbgRootPath>
+        </PropertyGroup>
+        
+        <Exec Condition="'$(Platform)'=='x64' AND Exists('$(X96DbgRootPath)')" Command="xcopy /Y /I &quot;$(TargetDir)*.*&quot; &quot;$(X96DbgRootPath)\x64\plugins\x64DbgMCPServer&quot;" />
+        <Exec Condition="'$(Platform)'=='x86' AND Exists('$(X96DbgRootPath)')" Command="xcopy /Y /I &quot;$(TargetDir)*.*&quot; &quot;$(X96DbgRootPath)\x32\plugins\x64DbgMCPServer&quot;" />
+      </Target>
+
+2) DotNetPlugin.Stub/PluginMain.cs
+   - Why: Ensure the compiler resolves the DllExport attribute consistently in CI.
+   - What: Fully qualify DllExport attributes as:
+      [RGiesecke.DllExport.DllExport("pluginit", CallingConvention.Cdecl)]
+      [RGiesecke.DllExport.DllExport("plugsetup", CallingConvention.Cdecl)]
+      [RGiesecke.DllExport.DllExport("plugstop", CallingConvention.Cdecl)]
+      [RGiesecke.DllExport.DllExport("CBMENUENTRY", CallingConvention.Cdecl)]
+
+3) DotNetPlugin.Stub/Attributes.DllExport.cs
+   - Why: Provide a lightweight compile-time definition of the attribute without external packages. The runtime export rewriting is handled by UnmanagedExports.Repack in the Impl project.
+   - What: Create or overwrite with this C# source (namespace RGiesecke.DllExport) defining sealed DllExportAttribute with EntryPoint and CallingConvention properties.
+
+4) DotNetPlugin.Stub/DotNetPlugin.Stub.csproj
+   - Why: Avoid failing restore due to non-existent RGiesecke.DllExport.Metadata package.
+   - What: Ensure there is NO <PackageReference Include="RGiesecke.DllExport.Metadata" .../> entry.
+
+5) .github/workflows/build-x86.yml
+   - Why: Build x86 on GitHub runners, keep caches local, and publish artifact with desired name.
+   - What: Workflow must restore/build with BaseIntermediateOutputPath .cache/obj, and upload artifacts from bin/x86/Release with name AgentSmithers_x64DbgMCP_x32Plugin.
+
+6) .github/workflows/build-x64.yml
+   - Why: Build x64 on GitHub runners, keep caches local, and publish artifact with desired name.
+   - What: Workflow must restore/build with BaseIntermediateOutputPath .cache/obj, and upload artifacts from bin/x64/Release with name AgentSmithers_x64DbgMCP_x64Plugin.
+
+Notes:
+- Do not change other parts of the projects.
+- The PostBuild xcopy only runs on local machines where X96DbgRootPath exists; CI skips it.
+- The attribute source is for compilation only and does not replace the export rewriter in Impl.
+
