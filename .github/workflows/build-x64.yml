@@ -1,4 +1,4 @@
-name: Build x86 Plugin
+name: Build x64 Plugin
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - '**/*.cs'
       - '**/*.csproj'
       - 'Directory.Build.props'
-      - '.github/workflows/build-x86.yml'
+      - '.github/workflows/build-x64.yml'
 
 jobs:
   build:
@@ -27,19 +27,19 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: msbuild x64DbgMCPServer.sln /t:Restore /p:Platform=x86 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\
+        run: msbuild x64DbgMCPServer.sln /t:Restore /p:Platform=x64 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\
 
-      - name: Build x86 Release
-        run: msbuild x64DbgMCPServer.sln /t:Rebuild /p:Platform=x86 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\ /p:BaseOutputPath=.cache\\bin\\
+      - name: Build x64 Release
+        run: msbuild x64DbgMCPServer.sln /t:Rebuild /p:Platform=x64 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\ /p:BaseOutputPath=.cache\\bin\\
 
-      - name: Upload artifact (dp32)
+      - name: Upload artifact (dp64)
         uses: actions/upload-artifact@v4
         with:
-          name: AgentSmithers_x64DbgMCP_x32Plugin
+          name: AgentSmithers_x64DbgMCP_x64Plugin
           path: |
-            bin\\x86\\Release\\**\\*.dp32
-            bin\\x86\\Release\\**\\*.dll
-            bin\\x86\\Release\\**\\*.pdb
+            bin\\x64\\Release\\**\\*.dp64
+            bin\\x64\\Release\\**\\*.dll
+            bin\\x64\\Release\\**\\*.pdb
           if-no-files-found: error
 
       - name: Cleanup caches
