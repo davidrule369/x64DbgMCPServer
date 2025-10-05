@@ -10,8 +10,8 @@ namespace DotNetPlugin
         protected override void SetupMenu(Menus menus)
         {
             menus.Main
-                .AddAndConfigureItem("&StartMCPServer", StartMCPServer).SetIcon(Resources.AboutIcon).Parent
-                .AddAndConfigureItem("&StopMCPServer", StopMCPServer).SetIcon(Resources.AboutIcon).Parent
+                .AddAndConfigureItem("&Start MCP Server", StartMCPServer).SetIcon(Resources.AboutIcon).Parent
+                .AddAndConfigureItem("&Stop MCP Server", StopMCPServer).SetIcon(Resources.AboutIcon).Parent
                 .AddAndConfigureItem("&About...", OnAboutMenuItem).SetIcon(Resources.AboutIcon);
             //.AddAndConfigureItem("&CustomCommand", ExecuteCustomCommand).SetIcon(Resources.AboutIcon).Parent
             //.AddAndConfigureItem("&DotNetDumpProcess", OnDumpMenuItem).SetHotKey("CTRL+F12").Parent
