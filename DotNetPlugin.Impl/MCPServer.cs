@@ -1,4 +1,4 @@
-﻿using DotNetPlugin.NativeBindings.SDK;
+using DotNetPlugin.NativeBindings.SDK;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -19,6 +19,11 @@ namespace DotNetPlugin
         private readonly HttpListener _listener = new HttpListener();
         private readonly Dictionary<string, MethodInfo> _commands = new Dictionary<string, MethodInfo>(StringComparer.OrdinalIgnoreCase);
         private readonly Type _targetType;
+
+        public bool IsActivelyDebugging
+        {
+            get { return Bridge.DbgIsDebugging(); }
+        }
 
         public SimpleMcpServer(Type commandSourceType)
         {
