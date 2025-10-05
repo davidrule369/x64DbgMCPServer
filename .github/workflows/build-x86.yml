@@ -27,7 +27,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: msbuild x64DbgMCPServer.sln /t:Restore /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}"
+        run: msbuild x64DbgMCPServer.sln /t:Restore /p:Platform=x86 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\
 
       - name: Build x86 Release
         run: msbuild x64DbgMCPServer.sln /t:Rebuild /p:Platform=x86 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\ /p:BaseOutputPath=.cache\\bin\\
