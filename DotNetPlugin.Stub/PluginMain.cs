@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using DotNetPlugin.NativeBindings.SDK;
 using RGiesecke.DllExport;
+using System.Drawing;
 
 namespace DotNetPlugin
 {
@@ -284,6 +285,26 @@ namespace DotNetPlugin
         public static void CBMENUENTRY(Plugins.CBTYPE cbType, ref Plugins.PLUG_CB_MENUENTRY info)
         {
             Session.OnMenuEntry(ref info);
+        }
+
+        private static System.Drawing.Icon s_pluginIcon;
+
+        [RGiesecke.DllExport.DllExport("plugingeticon", CallingConvention.Cdecl)]
+        public static IntPtr plugingeticon()
+        {
+            if (s_pluginIcon == null)
+            {
+                var iconBytes = Session.Plugin?.GetIcon();
+                if (iconBytes == null || iconBytes.Length == 0)
+                    return IntPtr.Zero;
+
+                using (var ms = new System.IO.MemoryStream(iconBytes))
+                {
+                    s_pluginIcon = new System.Drawing.Icon(ms);
+                }
+            }
+
+            return s_pluginIcon?.Handle ?? IntPtr.Zero;
         }
     }
 }

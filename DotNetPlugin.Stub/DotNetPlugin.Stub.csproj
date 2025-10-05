@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
 
   <!-- Writes the target path of the Impl assembly to file and embeds that file as a resource in the current assembly. -->
