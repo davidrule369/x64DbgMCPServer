@@ -26,6 +26,38 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Enforce customizations
+        shell: pwsh
+        run: |
+          $attrPath = "DotNetPlugin.Stub/Attributes.DllExport.cs"
+          if (-not (Test-Path $attrPath)) {
+            @"
+namespace RGiesecke.DllExport
+{
+    using System;
+    using System.Runtime.InteropServices;
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public sealed class DllExportAttribute : Attribute
+    {
+        public DllExportAttribute() { }
+        public DllExportAttribute(string entryPoint) { EntryPoint = entryPoint; }
+        public DllExportAttribute(string entryPoint, CallingConvention callingConvention) { EntryPoint = entryPoint; CallingConvention = callingConvention; }
+        public string EntryPoint { get; }
+        public CallingConvention CallingConvention { get; }
+    }
+}
+"@ | Set-Content -NoNewline $attrPath
+          }
+
+          $pmPath = "DotNetPlugin.Stub/PluginMain.cs"
+          if (Test-Path $pmPath) {
+            $pm = Get-Content $pmPath -Raw
+            if ($pm -notmatch "\[RGiesecke\.DllExport\.DllExport\(") {
+              $pm = $pm -replace "\[DllExport\(", "[RGiesecke.DllExport.DllExport("
+              Set-Content $pmPath $pm
+            }
+          }
+
       - name: Restore
         run: msbuild x64DbgMCPServer.sln /t:Restore /p:Platform=x64 /p:Configuration=Release /p:RestorePackagesPath="${{ env.NUGET_PACKAGES }}" /p:BaseIntermediateOutputPath=.cache\\obj\\
 
