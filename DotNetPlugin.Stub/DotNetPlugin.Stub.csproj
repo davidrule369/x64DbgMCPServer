@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>$(PluginAssemblyName)</AssemblyName>
     <RootNamespace>$(PluginRootNamespace)</RootNamespace>
@@ -63,9 +63,6 @@
     <PackageReference Include="UnmanagedExports.Repack" Version="1.0.4">
       <!-- Suppress actual IL rewriting because we want to do that at a later stage (see DotNetPlugin.Impl) -->
       <ExcludeAssets>build</ExcludeAssets>
-    </PackageReference>
-    <PackageReference Include="RGiesecke.DllExport.Metadata" Version="1.0.0">
-      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 </Project>
