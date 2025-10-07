@@ -10,22 +10,41 @@ namespace DotNetPlugin
     {
         protected override void SetupMenu(Menus menus)
         {
-            // Set main plugin menu icon from embedded stub resource (DotNetPlugin.Resources.mcp.ico)
+            // Set main plugin menu icon (best-effort): prefer embedded mcp.ico; fallback to AboutIcon resource
             try
             {
-                var asm = typeof(PluginMain).Assembly; // Stub assembly contains the icon resource
-                using (var stream = asm.GetManifestResourceStream("DotNetPlugin.Resources.mcp.ico"))
+                var asm = typeof(Plugin).Assembly; // current assembly
+                Stream stream = null;
+                // Try fully-qualified name first
+                stream = asm.GetManifestResourceStream("DotNetPlugin.Resources.mcp.ico");
+                // Fallback: search any resource ending with mcp.ico
+                if (stream == null)
                 {
-                    if (stream != null)
+                    foreach (var name in asm.GetManifestResourceNames())
                     {
-                        using (var ico = new System.Drawing.Icon(stream))
+                        if (name.EndsWith(".mcp.ico", StringComparison.OrdinalIgnoreCase))
                         {
-                            menus.Main.SetIcon(ico);
+                            stream = asm.GetManifestResourceStream(name);
+                            break;
                         }
                     }
                 }
+                if (stream != null)
+                {
+                    using (stream)
+                    using (var ico = new System.Drawing.Icon(stream))
+                        menus.Main.SetIcon(ico);
+                }
+                else
+                {
+                    // Fallback to existing resource icon so the menu still shows an icon
+                    menus.Main.SetIcon(Resources.AboutIcon);
+                }
             }
-            catch { /* best-effort: skip if resource not found */ }
+            catch
+            {
+                // Last resort: keep default without icon
+            }
 
             menus.Main
                 .AddAndConfigureItem("&Start MCP Server", StartMCPServer).SetIcon(Resources.AboutIcon).Parent
