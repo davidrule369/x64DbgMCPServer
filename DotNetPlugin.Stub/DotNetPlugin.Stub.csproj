@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\mcp.ico" />
+    <!-- Removed ICO; menu icon is provided by Impl via Resources.MainIcon (PNG) -->
   </ItemGroup>
 
   <!-- Writes the target path of the Impl assembly to file and embeds that file as a resource in the current assembly. -->

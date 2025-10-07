@@ -287,56 +287,11 @@ namespace DotNetPlugin
             Session.OnMenuEntry(ref info);
         }
 
-        private static System.Drawing.Icon s_pluginIcon;
-
         [RGiesecke.DllExport.DllExport("plugingeticon", CallingConvention.Cdecl)]
         public static IntPtr plugingeticon()
         {
-            if (s_pluginIcon == null)
-            {
-                try
-                {
-                    var asm = Assembly.GetExecutingAssembly();
-
-                    // Preferred fully-qualified resource name
-                    var resourceName = "DotNetPlugin.Resources.mcp.ico";
-                    Stream stream = asm.GetManifestResourceStream(resourceName);
-
-                    // Fallback: search for any resource ending with mcp.ico
-                    if (stream == null)
-                    {
-                        string foundName = null;
-                        foreach (var name in asm.GetManifestResourceNames())
-                        {
-                            if (name.EndsWith(".mcp.ico", StringComparison.OrdinalIgnoreCase))
-                            {
-                                foundName = name;
-                                break;
-                            }
-                        }
-                        if (foundName != null)
-                            stream = asm.GetManifestResourceStream(foundName);
-                    }
-
-                    if (stream != null)
-                    {
-                        using (stream)
-                        {
-                            s_pluginIcon = new System.Drawing.Icon(stream);
-                        }
-                    }
-                    else
-                    {
-                        return IntPtr.Zero;
-                    }
-                }
-                catch
-                {
-                    return IntPtr.Zero;
-                }
-            }
-
-            return s_pluginIcon?.Handle ?? IntPtr.Zero;
+            // Icon handled via managed menu icon in Impl; no stub icon.
+            return IntPtr.Zero;
         }
     }
 }
