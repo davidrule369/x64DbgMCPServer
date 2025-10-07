@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 using DotNetPlugin.NativeBindings.SDK;
 using DotNetPlugin.Properties;
@@ -9,6 +10,23 @@ namespace DotNetPlugin
     {
         protected override void SetupMenu(Menus menus)
         {
+            // Set main plugin menu icon from embedded stub resource (DotNetPlugin.Resources.mcp.ico)
+            try
+            {
+                var asm = typeof(PluginMain).Assembly; // Stub assembly contains the icon resource
+                using (var stream = asm.GetManifestResourceStream("DotNetPlugin.Resources.mcp.ico"))
+                {
+                    if (stream != null)
+                    {
+                        using (var ico = new System.Drawing.Icon(stream))
+                        {
+                            menus.Main.SetIcon(ico);
+                        }
+                    }
+                }
+            }
+            catch { /* best-effort: skip if resource not found */ }
+
             menus.Main
                 .AddAndConfigureItem("&Start MCP Server", StartMCPServer).SetIcon(Resources.AboutIcon).Parent
                 .AddAndConfigureItem("&Stop MCP Server", StopMCPServer).SetIcon(Resources.AboutIcon).Parent
