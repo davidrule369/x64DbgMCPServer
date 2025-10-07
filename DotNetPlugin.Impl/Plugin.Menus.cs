@@ -37,8 +37,8 @@ namespace DotNetPlugin
                 }
                 else
                 {
-                    // Fallback to existing resource icon so the menu still shows an icon
-                    menus.Main.SetIcon(Resources.AboutIcon);
+                    // Fallback to managed resource (PNG)
+                    menus.Main.SetIcon(Resources.MainIcon);
                 }
             }
             catch
