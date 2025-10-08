@@ -243,17 +243,9 @@ namespace DotNetPlugin
                     // Start log redirection
                     DbgCmdExec($"LogRedirect \"{tempFile}\"");
                     Thread.Sleep(100);
-                    DbgCmdExec("LogClear");
-                    Thread.Sleep(100);
                     
-                    // Try alternative breakpoint commands that are safer for x32dbg
-                    Console.WriteLine("Trying alternative breakpoint commands for x32dbg...");
-                    
-                    // Try bpcount first (safer)
-                    DbgCmdExec("bpcount");
-                    Thread.Sleep(200);
-                    
-                    // Try bplist with a delay
+                    // Try bplist with a delay (safer for x32dbg)
+                    Console.WriteLine("Executing bplist with safety delay for x32dbg...");
                     DbgCmdExec("bplist");
                     Thread.Sleep(300);
                     
@@ -332,8 +324,6 @@ namespace DotNetPlugin
 
                 // Start redirection
                 DbgCmdExec($"LogRedirect \"{tempFile}\"");
-                Thread.Sleep(50);
-                DbgCmdExec("LogClear");
                 Thread.Sleep(50);
 
                 // Execute the actual command
