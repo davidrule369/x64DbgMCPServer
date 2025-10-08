@@ -22,8 +22,6 @@ namespace DotNetPlugin
 {
     partial class Plugin
     {
-
-        //Commmand Toolnames should be ^[a-zA-Z0-9_-]{1,64}$
         //[Command("DotNetpluginTestCommand")]
         public static void cbNetTestCommand(string[] args)
         {
@@ -89,49 +87,22 @@ namespace DotNetPlugin
 
         static SimpleMcpServer GSimpleMcpServer;
 
-        [Command("StartMCPServer", X64DbgOnly = true ,DebugOnly = false)]
+        [Command("StartMCPServer", DebugOnly = false)]
         public static void cbStartMCPServer(string[] args)
         {
-            // --- Check if already initialized ---
-            if (GSimpleMcpServer != null)
-            {
-                Console.WriteLine("MCPServer instance already exists. Start command ignored.");
-                return; // Don't create a new one
-            }
-            Console.WriteLine("Starting MCPServer...");
-            try
-            {
-                // Create new instance and assign it to the static field
-                GSimpleMcpServer = new SimpleMcpServer(typeof(DotNetPlugin.Plugin));
-                GSimpleMcpServer.Start(); // Start the newly created server
-                Console.WriteLine("MCPServer Started.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to start MCPServer: {ex.Message}");
-                GSimpleMcpServer = null;
-            }
+            Console.WriteLine("Starting MCPServer");
+            GSimpleMcpServer = new SimpleMcpServer(typeof(DotNetPlugin.Plugin));
+            GSimpleMcpServer.Start();
+            Console.WriteLine("MCPServer Started");
         }
 
-        [Command("StopMCPServer", X64DbgOnly = true, DebugOnly = false)]
+        [Command("StopMCPServer", DebugOnly = false)]
         public static void cbStopMCPServer(string[] args)
         {
-            if (GSimpleMcpServer == null)
-            {
-                Console.WriteLine("MCPServer instance not found (already stopped or never started). Stop command ignored.");
-                return; // Nothing to stop
-            }
-            Console.WriteLine("Stopping MCPServer...");
-            try
-            {
-                GSimpleMcpServer.Stop();
-                GSimpleMcpServer = null;
-                Console.WriteLine("MCPServer Stopped.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error stopping MCPServer: {ex.Message}");
-            }
+            Console.WriteLine("Stopping MCPServer");
+            GSimpleMcpServer.Stop();
+            GSimpleMcpServer = null;
+            Console.WriteLine("MCPServer Stopped");
         }
 
         /// <summary>
@@ -147,11 +118,112 @@ namespace DotNetPlugin
         /// </summary>
         /// <param name="command">The debugger command string to execute.</param>
         /// <returns>True if the command executed successfully, false otherwise.</returns>
-        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe\r\nNote: See ListDebuggerCommands for list of applicable commands. Once a program is loaded new available functions can be viewed from the tools/list")]
+        [Command("ExecuteDebuggerCommand", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ExecuteDebuggerCommand command=init c:\\Path\\To\\Program.exe\r\nNote: See ListDebuggerCommands for list of applicable commands.")]
         public static bool ExecuteDebuggerCommand(string command)
         {
             Console.WriteLine("Executing DebuggerCommand: " + command);
             return DbgCmdExec(command);
+        }
+
+        [Command("ExecuteDebuggerCommandWithVar", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Execute a command then return a debugger variable. Example: ExecuteDebuggerCommandWithVar command=init notepad.exe, resultVar=$pid, pollMs=100, pollTimeoutMs=5000")]
+        public static string ExecuteDebuggerCommandWithVar(string command, string resultVar = "$result", int pollMs = 0, int pollTimeoutMs = 2000)
+        {
+            try
+            {
+                Console.WriteLine("Executing DebuggerCommandWithVar: " + command + ", resultVar=" + resultVar);
+                DbgCmdExec(command);
+
+                if (pollMs > 0 && pollTimeoutMs > 0)
+                {
+                    var sw = Stopwatch.StartNew();
+                    while (sw.ElapsedMilliseconds < pollTimeoutMs)
+                    {
+                        var v = Bridge.DbgValFromString(resultVar);
+                        if (v != 0)
+                            return "0x" + v.ToHexString();
+                        Thread.Sleep(pollMs);
+                    }
+                }
+
+                {
+                    var v = Bridge.DbgValFromString(resultVar);
+                    return "0x" + v.ToHexString();
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"[ExecuteDebuggerCommandWithVar] Error: {ex.Message}";
+            }
+        }
+
+        [Command("ExecuteDebuggerCommandWithOutput", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Execute a command and return captured log output. Example: ExecuteDebuggerCommandWithOutput command=\"bplist\"")]
+        public static string ExecuteDebuggerCommandWithOutput(string command, int settleDelayMs = 200)
+        {
+            string tempFile = null;
+            try
+            {
+                Console.WriteLine("Executing DebuggerCommandWithOutput: " + command);
+
+                tempFile = Path.Combine(Path.GetTempPath(), "x64dbg_cmd_" + Guid.NewGuid().ToString("N") + ".log");
+
+                // Start redirection
+                DbgCmdExec($"LogRedirect \"{tempFile}\"");
+                Thread.Sleep(50);
+                DbgCmdExec("LogClear");
+                Thread.Sleep(50);
+
+                // Execute the actual command
+                var ok = DbgCmdExec(command);
+                Thread.Sleep(settleDelayMs);
+
+                // Stop redirection
+                DbgCmdExec("LogRedirectStop");
+                Thread.Sleep(100);
+
+                // Read file with simple retries
+                string output = string.Empty;
+                for (int i = 0; i < 5; i++)
+                {
+                    if (File.Exists(tempFile))
+                    {
+                        try
+                        {
+                            var fi = new FileInfo(tempFile);
+                            if (fi.Length > 0)
+                            {
+                                output = File.ReadAllText(tempFile, Encoding.UTF8);
+                                break;
+                            }
+                        }
+                        catch { }
+                    }
+                    Thread.Sleep(100);
+                }
+
+                // Filter common noise lines
+                if (!string.IsNullOrEmpty(output))
+                {
+                    var lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                        .Where(l => !l.Contains("Log will be redirected to")
+                                 && !l.Contains("Log redirection stopped")
+                                 && !l.Equals("Log cleared", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+                    output = string.Join(Environment.NewLine, lines).Trim();
+                }
+
+                if (!string.IsNullOrEmpty(output))
+                    return output;
+
+                return ok ? "Command executed successfully (no output captured)" : "Command execution failed (no output captured)";
+            }
+            catch (Exception ex)
+            {
+                return $"[ExecuteDebuggerCommandWithOutput] Error: {ex.Message}";
+            }
+            finally
+            {
+                try { if (!string.IsNullOrEmpty(tempFile) && File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+            }
         }
 
         [Command("ListDebuggerCommands", DebugOnly = false, MCPOnly = true, MCPCmdDescription = "Example: ListDebuggerCommands")]
@@ -1451,9 +1523,9 @@ namespace DotNetPlugin
 
 
         [Command("DumpModuleToFile", DebugOnly = true, MCPOnly = true, MCPCmdDescription = "Example: DumpModuleToFile pfilepath=C:\\Output.txt")]
-        public static void DumpModuleToFile(string pfilepath)
+        public static void DumpModuleToFile(string[] pfilepath)
         {
-            string filePath = pfilepath;//@"C:\dump.txt"; // Hardcoded file path as requested
+            string filePath = pfilepath[0];//@"C:\dump.txt"; // Hardcoded file path as requested
             Console.WriteLine($"Attempting to dump module info to: {filePath}");
 
             try
